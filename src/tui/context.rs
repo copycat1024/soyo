@@ -1,4 +1,4 @@
-use super::{Frame, Letter, Rect};
+use super::{backend::Backend, Frame, Letter, Rect};
 use crate::util::{HotRef, Result};
 use crossterm::{
     event::{poll, read, Event, KeyEvent},
@@ -6,29 +6,31 @@ use crossterm::{
 };
 use std::{cell::Cell, time::Duration};
 
-pub struct Context {
+pub struct Context<B: Backend> {
+    backend: B,
     frame: Frame,
     period: Duration,
     clear_bg: Color,
+    log: String,
 }
 
-impl Context {
+impl<B: Backend> Context<B> {
     pub fn event(&mut self) -> Result<Option<Event>> {
-        Ok(if poll(self.period)? {
-            let event = read()?;
-
-            match event {
-                Event::Resize(w, h) => {
-                    if self.frame.resize(w as i32, h as i32) {
-                        Some(event)
-                    } else {
-                        None
+        self.backend.event(self.period).map(|option| {
+            if let Some(event) = option {
+                match event {
+                    Event::Resize(w, h) => {
+                        if self.frame.resize(w as i32, h as i32) {
+                            Some(event)
+                        } else {
+                            None
+                        }
                     }
+                    _ => Some(event),
                 }
-                _ => Some(event),
+            } else {
+                None
             }
-        } else {
-            None
         })
     }
 
@@ -36,73 +38,29 @@ impl Context {
         self.frame.item(x, y, z)
     }
 
-    pub fn draw(&self) -> Result {
-        use std::io::{stdout, Write};
-
-        self.frame.draw()?;
-        stdout().flush()?;
-
-        Ok(())
+    pub fn draw(&mut self) -> Result {
+        let Self { frame, backend, .. } = self;
+        frame.draw(backend)
     }
 
     pub fn clear(&mut self) -> Result {
-        use std::io::{stdout, Write};
-
-        self.frame.clear(self.clear_bg)?;
-        stdout().flush()?;
-
-        Ok(())
+        let Self { frame, backend, .. } = self;
+        frame.clear(backend, self.clear_bg)
     }
 
-    pub fn log<F>(f: F) -> Result
-    where
-        F: Fn() -> Result,
-    {
-        leave()?;
-        f()?;
-        enter()
+    pub fn leak_log(&self) -> String {
+        self.log.clone()
     }
 }
 
-impl Drop for Context {
-    fn drop(&mut self) {
-        leave().expect("Cannot leave silk");
-    }
-}
-
-impl Default for Context {
+impl<B: Backend> Default for Context<B> {
     fn default() -> Self {
-        enter().expect("Cannot enter silk");
         Self {
+            backend: B::default(),
             frame: Frame::new(),
             period: Duration::from_millis(100),
             clear_bg: Color::Red,
+            log: String::new(),
         }
     }
-}
-
-pub fn enter() -> Result {
-    use crossterm::{cursor, terminal, ExecutableCommand};
-    use std::io::stdout;
-
-    terminal::enable_raw_mode()?;
-    stdout()
-        .execute(terminal::DisableLineWrap)?
-        .execute(terminal::EnterAlternateScreen)?
-        .execute(cursor::Hide)?;
-
-    Ok(())
-}
-
-pub fn leave() -> Result {
-    use crossterm::{cursor, terminal, ExecutableCommand};
-    use std::io::stdout;
-
-    stdout()
-        .execute(terminal::EnableLineWrap)?
-        .execute(terminal::LeaveAlternateScreen)?
-        .execute(cursor::Show)?;
-    terminal::disable_raw_mode()?;
-
-    Ok(())
 }

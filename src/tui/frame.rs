@@ -1,5 +1,7 @@
-use super::{Buffer, Rect};
-use crate::util::{Hot, HotRef, Result};
+use crate::{
+    tui::{Backend, Buffer, Rect},
+    util::{Hot, HotRef, Result},
+};
 use crossterm::style::Color;
 use std::{
     fmt::Display,
@@ -35,8 +37,8 @@ impl Frame {
         }
     }
 
-    pub fn draw(&self) -> Result {
-        let mut seq = Sequencer::new(self);
+    pub fn draw<B: Backend>(&self, backend: &mut B) -> Result {
+        let mut seq = Sequencer::new(self, backend);
         let x0 = self.0.rect().x;
 
         for (c, x, y) in self.0.iter(true) {
@@ -47,8 +49,9 @@ impl Frame {
         Ok(())
     }
 
-    pub fn clear(&self, c: Color) -> Result {
-        Sequencer::new(self).bg(c)?.clear().map(|_| ())
+    pub fn clear<B: Backend>(&self, backend: &mut B, c: Color) -> Result {
+        backend.bg(c)?.clear()?;
+        Ok(())
     }
 }
 
@@ -79,7 +82,8 @@ impl Slot {
     }
 }
 
-struct Sequencer<'a> {
+struct Sequencer<'a, B: Backend> {
+    backend: &'a mut B,
     src: &'a Frame,
     fg: Color,
     bg: Color,
@@ -87,10 +91,11 @@ struct Sequencer<'a> {
     place: bool,
 }
 
-impl<'a> Sequencer<'a> {
-    fn new(src: &'a Frame) -> Self {
+impl<'a, B: Backend> Sequencer<'a, B> {
+    fn new(src: &'a Frame, backend: &'a mut B) -> Self {
         Self {
             src,
+            backend,
             fg: Color::Reset,
             bg: Color::Reset,
             buf: String::from(""),
@@ -123,7 +128,7 @@ impl<'a> Sequencer<'a> {
     fn flush(&mut self, p: bool) -> Result {
         if !self.buf.is_empty() {
             self.place = p;
-            self.print(&self.buf)?;
+            self.backend.print(&self.buf)?;
             self.buf.clear();
         }
 
@@ -132,7 +137,7 @@ impl<'a> Sequencer<'a> {
 
     fn place(&mut self, x: i32, y: i32, c: char) -> Result {
         if !self.place {
-            self.gotoxy(x, y)?;
+            self.backend.gotoxy(x, y)?;
             self.place = true;
         }
         self.buf.push(c);
@@ -143,7 +148,7 @@ impl<'a> Sequencer<'a> {
     fn set_bg(&mut self, c: Color) -> Result {
         self.flush(true)?;
         self.bg = c;
-        self.bg(c)?;
+        self.backend.bg(c)?;
 
         Ok(())
     }
@@ -151,81 +156,8 @@ impl<'a> Sequencer<'a> {
     fn set_fg(&mut self, c: Color) -> Result {
         self.flush(true)?;
         self.fg = c;
-        self.fg(c)?;
+        self.backend.fg(c)?;
 
         Ok(())
-    }
-}
-
-impl<'a> Sequencer<'a> {
-    fn gotoxy(&self, x: i32, y: i32) -> Result<&Self> {
-        use crossterm::{cursor::MoveTo, QueueableCommand};
-        use std::io::stdout;
-
-        stdout().queue(MoveTo(x as u16, y as u16))?;
-
-        Ok(self)
-    }
-
-    fn fg(&self, c: Color) -> Result<&Self> {
-        use crossterm::{style::SetForegroundColor, QueueableCommand};
-        use std::io::stdout;
-
-        stdout().queue(SetForegroundColor(c))?;
-
-        Ok(self)
-    }
-
-    fn bg(&self, c: Color) -> Result<&Self> {
-        use crossterm::{style::SetBackgroundColor, QueueableCommand};
-        use std::io::stdout;
-
-        stdout().queue(SetBackgroundColor(c))?;
-
-        Ok(self)
-    }
-
-    fn print<T: Display>(&self, txt: &T) -> Result<&Self> {
-        use crossterm::{style::Print, QueueableCommand};
-        use std::io::stdout;
-
-        stdout().queue(Print(txt))?;
-
-        Ok(self)
-    }
-
-    fn clear(&self) -> Result<&Self> {
-        use crossterm::{
-            style::ResetColor,
-            terminal::{Clear, ClearType},
-            QueueableCommand,
-        };
-        use std::io::stdout;
-
-        stdout().queue(ResetColor)?.queue(Clear(ClearType::All))?;
-
-        Ok(self)
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::{Frame, Rect};
-
-    #[test]
-    fn test_item() {
-        let mut f = Frame::new();
-        f.resize(4, 4);
-        if let Some(mut l) = f.item(1, 1, 1) {
-            l.c = 'A';
-        }
-
-        for (c, x, y) in f.0.iter(true) {
-            if x == 1 && y == 1 {
-                assert_eq!(f.0[(x, y)].letter.c, 'A', "at ({},{})", x, y);
-            } else {
-                assert_eq!(f.0[(x, y)].letter.c, '\0', "at ({},{})", x, y);
-            }
-        }
     }
 }
