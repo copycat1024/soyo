@@ -6,31 +6,60 @@ use crossterm::{
 };
 use std::{cell::Cell, time::Duration};
 
-pub struct Context<B: Backend> {
-    backend: B,
-    frame: Frame,
+#[derive(Clone, Copy)]
+struct Config {
     period: Duration,
     clear_bg: Color,
-    log: String,
 }
 
-impl<B: Backend> Context<B> {
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            period: Duration::from_millis(100),
+            clear_bg: Color::Red,
+        }
+    }
+}
+
+pub struct Context<'a, B: Backend> {
+    // external components
+    backend: &'a mut B,
+
+    // internal components
+    frame: Frame,
+    config: Config,
+
+    log: String,
+    count: u64,
+}
+
+impl<'a, B: Backend> Context<'a, B> {
+    pub fn compose(backend: &'a mut B) -> Self {
+        Self {
+            backend,
+            frame: Frame::default(),
+            config: Config::default(),
+            log: String::new(),
+            count: 0,
+        }
+    }
+
     pub fn event(&mut self) -> Result<Option<Event>> {
-        self.backend.event(self.period).map(|option| {
-            if let Some(event) = option {
-                match event {
-                    Event::Resize(w, h) => {
-                        if self.frame.resize(w as i32, h as i32) {
-                            Some(event)
-                        } else {
-                            None
-                        }
+        self.backend.event(self.config.period).map(|event| {
+            match event {
+                Some(event) => {
+                    let count = self.count;
+                    let logger = self.backend.logger();
+                    if count > 0 {
+                        writeln!(logger, "None({count})");
                     }
-                    _ => Some(event),
+                    writeln!(logger, "{event:?}");
                 }
-            } else {
-                None
+                None => {
+                    self.count += 1;
+                }
             }
+            self.frame.map_event(event)
         })
     }
 
@@ -40,27 +69,15 @@ impl<B: Backend> Context<B> {
 
     pub fn draw(&mut self) -> Result {
         let Self { frame, backend, .. } = self;
-        frame.draw(backend)
+        frame.draw(*backend)
     }
 
     pub fn clear(&mut self) -> Result {
         let Self { frame, backend, .. } = self;
-        frame.clear(backend, self.clear_bg)
+        frame.clear(*backend, self.config.clear_bg)
     }
 
     pub fn leak_log(&self) -> String {
         self.log.clone()
-    }
-}
-
-impl<B: Backend> Default for Context<B> {
-    fn default() -> Self {
-        Self {
-            backend: B::default(),
-            frame: Frame::new(),
-            period: Duration::from_millis(100),
-            clear_bg: Color::Red,
-            log: String::new(),
-        }
     }
 }

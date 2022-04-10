@@ -1,5 +1,5 @@
 use super::Backend;
-use crate::util::Result;
+use crate::util::{Logger, Result};
 use crossterm::{
     cursor::{Hide, MoveTo, Show},
     event::{poll, read, Event},
@@ -15,9 +15,19 @@ use std::{
     time::Duration,
 };
 
-pub struct CrosstermBackend {}
+pub struct CrosstermBackend<'a, W: Write> {
+    writer: W,
+    logger: &'a mut Logger,
+}
 
-impl Backend for CrosstermBackend {
+impl<'a, W: Write> CrosstermBackend<'a, W> {
+    pub fn new(mut writer: W, logger: &'a mut Logger) -> Self {
+        enter(&mut writer).expect("Cannot enter crossterm.");
+        Self { writer, logger }
+    }
+}
+
+impl<'a, W: Write> Backend for CrosstermBackend<'a, W> {
     fn event(&mut self, period: Duration) -> Result<Option<Event>> {
         if poll(period)? {
             read().map(Some).map_err(|err| err.into())
@@ -27,57 +37,51 @@ impl Backend for CrosstermBackend {
     }
 
     fn print(&mut self, txt: &str) -> Result<&mut Self> {
-        stdout().queue(Print(txt))?;
-
+        self.writer.queue(Print(txt))?;
+        writeln!(self.logger(), "Print('{txt}')");
         Ok(self)
     }
 
     fn gotoxy(&mut self, x: i32, y: i32) -> Result<&mut Self> {
-        stdout().queue(MoveTo(x as u16, y as u16))?;
-
+        self.writer.queue(MoveTo(x as u16, y as u16))?;
+        writeln!(self.logger(), "MoveTo('{x},{y}')");
         Ok(self)
     }
 
     fn fg(&mut self, c: Color) -> Result<&mut Self> {
-        stdout().queue(SetForegroundColor(c))?;
-
+        self.writer.queue(SetForegroundColor(c))?;
         Ok(self)
     }
 
     fn bg(&mut self, c: Color) -> Result<&mut Self> {
-        stdout().queue(SetBackgroundColor(c))?;
-
+        self.writer.queue(SetBackgroundColor(c))?;
         Ok(self)
     }
 
     fn clear(&mut self) -> Result<&mut Self> {
-        stdout().queue(ResetColor)?.queue(Clear(ClearType::All))?;
-
+        self.writer
+            .queue(ResetColor)?
+            .queue(Clear(ClearType::All))?;
         Ok(self)
     }
 
     fn flush(&mut self) -> Result<&mut Self> {
-        stdout().flush()?;
-
+        self.writer.flush()?;
         Ok(self)
     }
-}
 
-impl Default for CrosstermBackend {
-    fn default() -> Self {
-        enter().expect("Cannot enter crossterm.");
-
-        Self {}
+    fn logger(&mut self) -> &mut dyn Write {
+        &mut self.logger
     }
 }
 
-impl Drop for CrosstermBackend {
+impl<'a, W: Write> Drop for CrosstermBackend<'a, W> {
     fn drop(&mut self) {
-        leave().expect("Cannot leave crossterm.");
+        leave(&mut self.writer).expect("Cannot leave crossterm.");
     }
 }
 
-pub fn enter() -> Result {
+pub fn enter<W: Write>(writer: &mut W) -> Result {
     enable_raw_mode()?;
     stdout()
         .execute(DisableLineWrap)?
@@ -86,7 +90,7 @@ pub fn enter() -> Result {
     Ok(())
 }
 
-pub fn leave() -> Result {
+pub fn leave<W: Write>(writer: &mut W) -> Result {
     disable_raw_mode()?;
     stdout()
         .execute(LeaveAlternateScreen)?
