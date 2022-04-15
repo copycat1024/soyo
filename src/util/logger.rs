@@ -9,12 +9,6 @@ pub struct LoggerServer {
 }
 
 impl LoggerServer {
-    pub fn new() -> Self {
-        Self {
-            data: Rc::new(RefCell::new(Vec::new())),
-        }
-    }
-
     pub fn client(&self) -> LoggerClient {
         LoggerClient {
             data: Rc::downgrade(&self.data),
@@ -53,12 +47,20 @@ impl LoggerServer {
     }
 }
 
+impl Default for LoggerServer {
+    fn default() -> Self {
+        Self {
+            data: Rc::new(RefCell::new(Vec::new())),
+        }
+    }
+}
+
 pub struct LoggerClient {
     data: Weak<RefCell<Vec<u8>>>,
 }
 
-impl LoggerClient {
-    pub fn new() -> Self {
+impl Default for LoggerClient {
+    fn default() -> Self {
         Self { data: Weak::new() }
     }
 }

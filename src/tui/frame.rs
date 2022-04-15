@@ -6,6 +6,7 @@ use std::{
     ops::{Index, IndexMut},
 };
 
+#[derive(Default)]
 pub struct Frame {
     buffer: Buffer<Slot>,
     logger: LoggerClient,
@@ -38,6 +39,7 @@ impl Frame {
         for (x, y) in rect.iter(false) {
             if let Some(slot) = self.buffer.get_mut(rect.x + x, rect.y + y) {
                 if z > slot.z {
+                    slot.z = z;
                     renderer(x, y, &mut slot.letter)
                 }
             }
@@ -72,15 +74,6 @@ impl Frame {
 
     pub fn set_logger(&mut self, logger: &LoggerServer) {
         self.logger = logger.client();
-    }
-}
-
-impl Default for Frame {
-    fn default() -> Self {
-        Self {
-            buffer: Buffer::new(),
-            logger: LoggerClient::new(),
-        }
     }
 }
 

@@ -6,12 +6,11 @@ use soyo::{
 use std::io::stdout;
 
 fn main() -> Result {
-    // let mut binary_logger = LoggerServer::new();
-    let mut backend_logger = LoggerServer::new();
+    let mut logger = LoggerServer::default();
 
     {
         let mut backend = CrosstermBackend::new(stdout());
-        let mut ctx = Context::compose(&mut backend, &mut backend_logger);
+        let mut ctx = Context::compose(&mut backend, Some(&mut logger));
         ctx.clear()?;
 
         'main: loop {
@@ -25,22 +24,22 @@ fn main() -> Result {
             }
 
             let mut rect = Rect::new();
-            rect.xywh(0, 0, 1, 1);
+            rect.xywh(0, 0, 5, 5);
             ctx.render(rect, 1, |_, _, letter| {
                 *letter.c = 'X';
-                *letter.fg = Color::Red;
+                *letter.bg = Color::Blue;
             });
-            rect.xywh(1, 1, 1, 1);
-            ctx.render(rect, 1, |_, _, letter| {
+            rect.xywh(2, 2, 5, 5);
+            ctx.render(rect, 2, |_, _, letter| {
                 *letter.c = 'O';
-                *letter.fg = Color::Blue;
+                *letter.bg = Color::Blue;
             });
 
             ctx.draw()?;
         }
     }
 
-    backend_logger.print_raw();
+    logger.print_raw();
 
     Ok(())
 }

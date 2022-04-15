@@ -1,8 +1,6 @@
 mod ct;
-// mod dbg;
 
 pub use ct::CrosstermBackend;
-// pub use dbg::DebugBackend;
 
 use crate::util::{LoggerServer, Result};
 use crossterm::{event::Event, style::Color};
