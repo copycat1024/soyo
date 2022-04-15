@@ -1,50 +1,62 @@
-use crate::{
-    tui::{Backend, Buffer, Rect},
-    util::{Hot, HotRef, Result},
-};
-use crossterm::style::Color;
+use super::{Backend, Buffer, Letter, Rect, Slot};
+use crate::util::{Hot, LoggerClient, LoggerServer, Result};
+use crossterm::{event::Event, style::Color};
 use std::{
     fmt::Display,
     ops::{Index, IndexMut},
 };
 
-pub struct Frame(Buffer<Slot>);
+pub struct Frame {
+    buffer: Buffer<Slot>,
+    logger: LoggerClient,
+}
 
 impl Frame {
-    pub fn new() -> Self {
-        Self(Buffer::new())
-    }
-
-    pub fn resize(&mut self, w: i32, h: i32) -> bool {
-        self.0.resize(w, h, Slot::new())
-    }
-
-    pub fn set(&mut self, x: i32, y: i32, z: i32, letter: Letter) {
-        let slot = &mut self.0[(x, y)];
-
-        if slot.z < z {
-            *slot.letter = letter;
-            slot.z = z;
-        }
-    }
-
-    pub fn item(&mut self, x: i32, y: i32, z: i32) -> Option<HotRef<Letter>> {
-        let slot = &mut self.0[(x, y)];
-        if slot.z < z {
-            Some(slot.letter.get_ref())
+    pub fn map_event(&mut self, event: Option<Event>) -> Option<Event> {
+        if let Some(event) = event {
+            match event {
+                Event::Resize(w, h) => {
+                    if self.resize(w as i32, h as i32) {
+                        Some(event)
+                    } else {
+                        None
+                    }
+                }
+                _ => Some(event),
+            }
         } else {
             None
         }
     }
 
-    pub fn draw<B: Backend>(&self, backend: &mut B) -> Result {
-        let mut seq = Sequencer::new(self, backend);
-        let x0 = self.0.rect().x;
+    pub fn render<F>(&mut self, rect: Rect, z: i32, renderer: F)
+    where
+        F: Fn(i32, i32, &mut Letter),
+    {
+        use std::io::Write;
 
-        for (c, x, y) in self.0.iter(true) {
-            seq.step(&c.letter, x, y, x == x0)?;
+        for (x, y) in rect.iter(false) {
+            if let Some(slot) = self.buffer.get_mut(rect.x + x, rect.y + y) {
+                if z > slot.z {
+                    renderer(x, y, &mut slot.letter)
+                }
+            }
         }
-        seq.flush(true)?;
+    }
+
+    pub fn draw<B: Backend>(&self, backend: &mut B) -> Result {
+        // writeln!(backend.logger(), "Draw()");
+
+        let mut seq = Sequencer::new(backend);
+        let x0 = self.buffer.rect().x;
+
+        for (c, x, y) in self.buffer.iter(true) {
+            if x == x0 {
+                seq.flush()?;
+            }
+            seq.step(&c.letter, x, y)?;
+        }
+        seq.flush()?;
 
         Ok(())
     }
@@ -53,92 +65,67 @@ impl Frame {
         backend.bg(c)?.clear()?;
         Ok(())
     }
+
+    pub fn resize(&mut self, w: i32, h: i32) -> bool {
+        self.buffer.resize(w, h, Slot::new())
+    }
+
+    pub fn set_logger(&mut self, logger: &LoggerServer) {
+        self.logger = logger.client();
+    }
 }
 
-#[derive(Clone, Copy, PartialEq)]
-pub struct Letter {
-    pub fg: Color,
-    pub bg: Color,
-    pub c: char,
-}
-
-#[derive(Clone)]
-pub struct Slot {
-    z: i32,
-    letter: Hot<Letter>,
-}
-
-impl Slot {
-    fn new() -> Self {
+impl Default for Frame {
+    fn default() -> Self {
         Self {
-            z: 0,
-            letter: Letter {
-                fg: Color::Reset,
-                bg: Color::Reset,
-                c: '\0',
-            }
-            .into(),
+            buffer: Buffer::new(),
+            logger: LoggerClient::new(),
         }
     }
 }
 
 struct Sequencer<'a, B: Backend> {
     backend: &'a mut B,
-    src: &'a Frame,
     fg: Color,
     bg: Color,
     buf: String,
-    place: bool,
 }
 
 impl<'a, B: Backend> Sequencer<'a, B> {
-    fn new(src: &'a Frame, backend: &'a mut B) -> Self {
+    fn new(backend: &'a mut B) -> Self {
         Self {
-            src,
             backend,
             fg: Color::Reset,
             bg: Color::Reset,
             buf: String::from(""),
-            place: false,
         }
     }
 
-    fn step(&mut self, letter: &Hot<Letter>, x: i32, y: i32, sol: bool) -> Result {
-        if sol {
-            self.flush(false)?;
-        }
-
-        if letter.c == '\0' && letter.check() {
-            self.flush(false)?;
+    fn step(&mut self, letter: &Letter, x: i32, y: i32) -> Result {
+        if letter.hot() {
+            self.set_bg(*letter.bg)?;
+            self.set_fg(*letter.fg)?;
+            self.place(x, y, *letter.c)?;
         } else {
-            if letter.bg != self.bg {
-                self.set_bg(letter.bg)?;
-            }
-
-            if letter.fg != self.fg {
-                self.set_fg(letter.fg)?;
-            }
-
-            self.place(x, y, letter.c)?;
+            self.flush()?;
         }
 
         Ok(())
     }
 
-    fn flush(&mut self, p: bool) -> Result {
+    fn flush(&mut self) -> Result {
         if !self.buf.is_empty() {
-            self.place = p;
             self.backend.print(&self.buf)?;
             self.buf.clear();
+            self.backend.flush()?;
         }
 
         Ok(())
     }
 
     fn place(&mut self, x: i32, y: i32, c: char) -> Result {
-        if !self.place {
+        if self.buf.is_empty() {
             self.backend.gotoxy(x, y)?;
-            self.place = true;
         }
         self.buf.push(c);
 
@@ -146,17 +133,21 @@ impl<'a, B: Backend> Sequencer<'a, B> {
     }
 
     fn set_bg(&mut self, c: Color) -> Result {
-        self.flush(true)?;
-        self.bg = c;
-        self.backend.bg(c)?;
+        if c != self.bg {
+            self.flush()?;
+            self.bg = c;
+            self.backend.bg(c)?;
+        }
 
         Ok(())
     }
 
     fn set_fg(&mut self, c: Color) -> Result {
-        self.flush(true)?;
-        self.fg = c;
-        self.backend.fg(c)?;
+        if c != self.fg {
+            self.flush()?;
+            self.fg = c;
+            self.backend.fg(c)?;
+        }
 
         Ok(())
     }

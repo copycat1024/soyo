@@ -1,66 +1,77 @@
 use super::{backend::Backend, Frame, Letter, Rect};
-use crate::util::{HotRef, Result};
+use crate::util::{LoggerClient, LoggerServer, Result};
 use crossterm::{
     event::{poll, read, Event, KeyEvent},
     style::Color,
 };
-use std::{cell::Cell, time::Duration};
+use std::{cell::Cell, io::Write, rc::Weak, time::Duration};
 
-pub struct Context<B: Backend> {
-    backend: B,
-    frame: Frame,
+#[derive(Clone, Copy)]
+struct Config {
     period: Duration,
     clear_bg: Color,
-    log: String,
 }
 
-impl<B: Backend> Context<B> {
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            period: Duration::from_millis(100),
+            clear_bg: Color::Red,
+        }
+    }
+}
+
+pub struct Context<'a, B: Backend> {
+    // external components
+    backend: &'a mut B,
+    logger: LoggerClient,
+
+    // internal components
+    frame: Frame,
+    config: Config,
+}
+
+impl<'a, B: Backend> Context<'a, B> {
+    pub fn compose(backend: &'a mut B, logger: &LoggerServer) -> Self {
+        let mut frame = Frame::default();
+
+        frame.set_logger(logger);
+        backend.set_logger(logger);
+
+        Self {
+            backend,
+            logger: logger.client(),
+            frame,
+            config: Config::default(),
+        }
+    }
+
     pub fn event(&mut self) -> Result<Option<Event>> {
-        self.backend.event(self.period).map(|option| {
-            if let Some(event) = option {
-                match event {
-                    Event::Resize(w, h) => {
-                        if self.frame.resize(w as i32, h as i32) {
-                            Some(event)
-                        } else {
-                            None
-                        }
-                    }
-                    _ => Some(event),
+        self.backend.event(self.config.period).map(|event| {
+            match event {
+                Some(event) => {
+                    writeln!(self.logger, "{event:?}").unwrap();
                 }
-            } else {
-                None
+                None => {}
             }
+            self.frame.map_event(event)
         })
     }
 
-    pub fn item(&mut self, x: i32, y: i32, z: i32) -> Option<HotRef<Letter>> {
-        self.frame.item(x, y, z)
+    pub fn render<F>(&mut self, rect: Rect, z: i32, renderer: F)
+    where
+        F: Fn(i32, i32, &mut Letter),
+    {
+        self.frame.render(rect, z, renderer);
     }
 
     pub fn draw(&mut self) -> Result {
         let Self { frame, backend, .. } = self;
-        frame.draw(backend)
+        frame.draw(*backend)
     }
 
     pub fn clear(&mut self) -> Result {
         let Self { frame, backend, .. } = self;
-        frame.clear(backend, self.clear_bg)
-    }
-
-    pub fn leak_log(&self) -> String {
-        self.log.clone()
-    }
-}
-
-impl<B: Backend> Default for Context<B> {
-    fn default() -> Self {
-        Self {
-            backend: B::default(),
-            frame: Frame::new(),
-            period: Duration::from_millis(100),
-            clear_bg: Color::Red,
-            log: String::new(),
-        }
+        frame.clear(*backend, self.config.clear_bg)
     }
 }

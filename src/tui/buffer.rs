@@ -27,15 +27,15 @@ impl<T: Clone> Buffer<T> {
         }
     }
 
-    fn index(&self, (x, y): (i32, i32)) -> usize {
+    fn index(&self, x: i32, y: i32) -> Option<usize> {
         let Self { rect, .. } = self;
+        let index = (y * rect.w + x) as usize;
 
-        assert!(x >= 0);
-        assert!(y >= 0);
-        assert!(x < rect.w);
-        assert!(y < rect.h);
-
-        (y * rect.w + x) as usize
+        if x >= 0 || y >= 0 || x < rect.w || y < rect.h {
+            Some(index)
+        } else {
+            None
+        }
     }
 
     pub fn iter(&self, abs: bool) -> Iter<'_, T> {
@@ -55,24 +55,28 @@ impl<T: Clone> Buffer<T> {
     pub fn data(&self) -> &Vec<T> {
         &self.data
     }
-}
 
-impl<T: Clone> Index<(i32, i32)> for Buffer<T> {
-    type Output = T;
-
-    fn index(&self, coor: (i32, i32)) -> &T {
-        let Self { data, rect } = self;
-        &data[self.index(coor)]
+    pub fn get_mut(&mut self, x: i32, y: i32) -> Option<&mut T> {
+        self.index(x, y).map(|index| &mut self.data[index])
     }
 }
 
-impl<T: Clone> IndexMut<(i32, i32)> for Buffer<T> {
-    fn index_mut(&mut self, coor: (i32, i32)) -> &mut T {
-        let i = self.index(coor);
-        let Self { data, rect } = self;
-        &mut data[i]
-    }
-}
+// impl<T: Clone> Index<(i32, i32)> for Buffer<T> {
+//     type Output = T;
+
+//     fn index(&self, coor: (i32, i32)) -> &T {
+//         let Self { data, rect } = self;
+//         &data[self.index(coor)]
+//     }
+// }
+
+// impl<T: Clone> IndexMut<(i32, i32)> for Buffer<T> {
+//     fn index_mut(&mut self, coor: (i32, i32)) -> &mut T {
+//         let i = self.index(coor);
+//         let Self { data, rect } = self;
+//         &mut data[i]
+//     }
+// }
 
 pub struct Iter<'a, T: Clone>(std::iter::Zip<std::slice::Iter<'a, T>, super::rect::Iter<'a>>);
 
