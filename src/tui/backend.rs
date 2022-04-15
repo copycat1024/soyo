@@ -4,7 +4,7 @@ mod ct;
 pub use ct::CrosstermBackend;
 // pub use dbg::DebugBackend;
 
-use crate::util::Result;
+use crate::util::{LoggerServer, Result};
 use crossterm::{event::Event, style::Color};
 use std::{io::Write, time::Duration};
 
@@ -16,5 +16,5 @@ pub trait Backend {
     fn bg(&mut self, c: Color) -> Result<&mut Self>;
     fn clear(&mut self) -> Result<&mut Self>;
     fn flush(&mut self) -> Result<&mut Self>;
-    fn logger(&mut self) -> &mut dyn Write;
+    fn set_logger(&mut self, logger: &LoggerServer);
 }

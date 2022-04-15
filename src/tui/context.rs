@@ -1,10 +1,10 @@
 use super::{backend::Backend, Frame, Letter, Rect};
-use crate::util::{HotRef, Result};
+use crate::util::{LoggerClient, LoggerServer, Result};
 use crossterm::{
     event::{poll, read, Event, KeyEvent},
     style::Color,
 };
-use std::{cell::Cell, time::Duration};
+use std::{cell::Cell, io::Write, rc::Weak, time::Duration};
 
 #[derive(Clone, Copy)]
 struct Config {
@@ -24,22 +24,26 @@ impl Default for Config {
 pub struct Context<'a, B: Backend> {
     // external components
     backend: &'a mut B,
+    logger: LoggerClient,
 
     // internal components
     frame: Frame,
     config: Config,
-
-    log: String,
-    count: u64,
+    count: i32,
 }
 
 impl<'a, B: Backend> Context<'a, B> {
-    pub fn compose(backend: &'a mut B) -> Self {
+    pub fn compose(backend: &'a mut B, logger: &LoggerServer) -> Self {
+        let mut frame = Frame::default();
+
+        frame.set_logger(logger);
+        backend.set_logger(logger);
+
         Self {
             backend,
-            frame: Frame::default(),
+            logger: logger.client(),
+            frame,
             config: Config::default(),
-            log: String::new(),
             count: 0,
         }
     }
@@ -48,12 +52,7 @@ impl<'a, B: Backend> Context<'a, B> {
         self.backend.event(self.config.period).map(|event| {
             match event {
                 Some(event) => {
-                    let count = self.count;
-                    let logger = self.backend.logger();
-                    if count > 0 {
-                        writeln!(logger, "None({count})");
-                    }
-                    writeln!(logger, "{event:?}");
+                    writeln!(self.logger, "{event:?}").unwrap();
                 }
                 None => {
                     self.count += 1;
@@ -63,8 +62,11 @@ impl<'a, B: Backend> Context<'a, B> {
         })
     }
 
-    pub fn item(&mut self, x: i32, y: i32, z: i32) -> Option<HotRef<Letter>> {
-        self.frame.item(x, y, z)
+    pub fn render<F>(&mut self, rect: Rect, z: i32, renderer: F)
+    where
+        F: Fn(i32, i32, &mut Letter),
+    {
+        self.frame.render(rect, z, renderer);
     }
 
     pub fn draw(&mut self) -> Result {
@@ -75,9 +77,5 @@ impl<'a, B: Backend> Context<'a, B> {
     pub fn clear(&mut self) -> Result {
         let Self { frame, backend, .. } = self;
         frame.clear(*backend, self.config.clear_bg)
-    }
-
-    pub fn leak_log(&self) -> String {
-        self.log.clone()
     }
 }

@@ -1,21 +1,30 @@
 use std::{
+    cell::{RefCell, RefMut},
     io::{Result, Write},
-    str::from_utf8,
+    rc::{Rc, Weak},
 };
 
-pub struct Logger {
-    data: Vec<u8>,
+pub struct LoggerServer {
+    data: Rc<RefCell<Vec<u8>>>,
 }
 
-impl Logger {
+impl LoggerServer {
     pub fn new() -> Self {
-        Self { data: Vec::new() }
+        Self {
+            data: Rc::new(RefCell::new(Vec::new())),
+        }
+    }
+
+    pub fn client(&self) -> LoggerClient {
+        LoggerClient {
+            data: Rc::downgrade(&self.data),
+        }
     }
 
     pub fn print_ascii(&self) {
         let mut null_count = 0_usize;
 
-        for c in self.data.iter() {
+        for c in self.data.borrow().iter() {
             if *c == 0 {
                 null_count += 1;
             } else {
@@ -38,15 +47,29 @@ impl Logger {
     }
 
     pub fn print_raw(&self) {
-        let data = from_utf8(&self.data).expect("Cannot convert log from UTF-8");
-        println!("{data}");
+        let data_vec = &self.data.borrow();
+        let data_str = std::str::from_utf8(data_vec).expect("Cannot convert log from UTF-8");
+        println!("{data_str}");
     }
 }
 
-impl Write for &mut Logger {
-    fn write(&mut self, data: &[u8]) -> Result<usize> {
-        self.data.extend(data);
-        Ok(data.len())
+pub struct LoggerClient {
+    data: Weak<RefCell<Vec<u8>>>,
+}
+
+impl LoggerClient {
+    pub fn new() -> Self {
+        Self { data: Weak::new() }
+    }
+}
+
+impl Write for LoggerClient {
+    fn write(&mut self, buf: &[u8]) -> Result<usize> {
+        if let Some(data) = self.data.upgrade() {
+            data.borrow_mut().write(buf)
+        } else {
+            Ok(buf.len())
+        }
     }
 
     fn flush(&mut self) -> Result<()> {

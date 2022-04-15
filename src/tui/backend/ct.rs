@@ -1,5 +1,5 @@
 use super::Backend;
-use crate::util::{Logger, Result};
+use crate::util::{LoggerClient, LoggerServer, Result};
 use crossterm::{
     cursor::{Hide, MoveTo, Show},
     event::{poll, read, Event},
@@ -11,23 +11,27 @@ use crossterm::{
     ExecutableCommand, QueueableCommand,
 };
 use std::{
-    io::{stdout, Write},
+    io::Write,
+    rc::{Rc, Weak},
     time::Duration,
 };
 
-pub struct CrosstermBackend<'a, W: Write> {
+pub struct CrosstermBackend<W: Write> {
     writer: W,
-    logger: &'a mut Logger,
+    logger: LoggerClient,
 }
 
-impl<'a, W: Write> CrosstermBackend<'a, W> {
-    pub fn new(mut writer: W, logger: &'a mut Logger) -> Self {
+impl<W: Write> CrosstermBackend<W> {
+    pub fn new(mut writer: W) -> Self {
         enter(&mut writer).expect("Cannot enter crossterm.");
-        Self { writer, logger }
+        Self {
+            writer,
+            logger: LoggerClient::new(),
+        }
     }
 }
 
-impl<'a, W: Write> Backend for CrosstermBackend<'a, W> {
+impl<W: Write> Backend for CrosstermBackend<W> {
     fn event(&mut self, period: Duration) -> Result<Option<Event>> {
         if poll(period)? {
             read().map(Some).map_err(|err| err.into())
@@ -38,13 +42,13 @@ impl<'a, W: Write> Backend for CrosstermBackend<'a, W> {
 
     fn print(&mut self, txt: &str) -> Result<&mut Self> {
         self.writer.queue(Print(txt))?;
-        writeln!(self.logger(), "Print('{txt}')");
+        writeln!(self.logger, "Print('{txt}')").unwrap();
         Ok(self)
     }
 
     fn gotoxy(&mut self, x: i32, y: i32) -> Result<&mut Self> {
         self.writer.queue(MoveTo(x as u16, y as u16))?;
-        writeln!(self.logger(), "MoveTo('{x},{y}')");
+        writeln!(self.logger, "MoveTo('{x},{y}')").unwrap();
         Ok(self)
     }
 
@@ -70,12 +74,12 @@ impl<'a, W: Write> Backend for CrosstermBackend<'a, W> {
         Ok(self)
     }
 
-    fn logger(&mut self) -> &mut dyn Write {
-        &mut self.logger
+    fn set_logger(&mut self, logger: &LoggerServer) {
+        self.logger = logger.client();
     }
 }
 
-impl<'a, W: Write> Drop for CrosstermBackend<'a, W> {
+impl<W: Write> Drop for CrosstermBackend<W> {
     fn drop(&mut self) {
         leave(&mut self.writer).expect("Cannot leave crossterm.");
     }
@@ -83,7 +87,7 @@ impl<'a, W: Write> Drop for CrosstermBackend<'a, W> {
 
 pub fn enter<W: Write>(writer: &mut W) -> Result {
     enable_raw_mode()?;
-    stdout()
+    writer
         .execute(DisableLineWrap)?
         .execute(EnterAlternateScreen)?
         .execute(Hide)?;
@@ -92,7 +96,7 @@ pub fn enter<W: Write>(writer: &mut W) -> Result {
 
 pub fn leave<W: Write>(writer: &mut W) -> Result {
     disable_raw_mode()?;
-    stdout()
+    writer
         .execute(LeaveAlternateScreen)?
         .execute(ResetColor)?
         .execute(EnableLineWrap)?
