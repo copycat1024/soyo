@@ -32,15 +32,19 @@ pub struct Context<'a, B: Backend> {
 }
 
 impl<'a, B: Backend> Context<'a, B> {
-    pub fn compose(backend: &'a mut B, logger: &LoggerServer) -> Self {
+    pub fn compose(backend: &'a mut B, logserver: Option<&LoggerServer>) -> Self {
         let mut frame = Frame::default();
+        let mut logger = LoggerClient::default();
 
-        frame.set_logger(logger);
-        backend.set_logger(logger);
+        if let Some(logserver) = logserver {
+            frame.set_logger(logserver);
+            backend.set_logger(logserver);
+            logger = logserver.client();
+        }
 
         Self {
             backend,
-            logger: logger.client(),
+            logger,
             frame,
             config: Config::default(),
         }

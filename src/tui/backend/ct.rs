@@ -26,7 +26,7 @@ impl<W: Write> CrosstermBackend<W> {
         enter(&mut writer).expect("Cannot enter crossterm.");
         Self {
             writer,
-            logger: LoggerClient::new(),
+            logger: LoggerClient::default(),
         }
     }
 }

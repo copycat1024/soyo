@@ -7,13 +7,6 @@ pub struct Buffer<T: Clone> {
 }
 
 impl<T: Clone> Buffer<T> {
-    pub fn new() -> Self {
-        Self {
-            rect: Rect::new(),
-            data: Vec::new(),
-        }
-    }
-
     pub fn resize(&mut self, w: i32, h: i32, val: T) -> bool {
         let Self { data, rect } = self;
 
@@ -61,22 +54,14 @@ impl<T: Clone> Buffer<T> {
     }
 }
 
-// impl<T: Clone> Index<(i32, i32)> for Buffer<T> {
-//     type Output = T;
-
-//     fn index(&self, coor: (i32, i32)) -> &T {
-//         let Self { data, rect } = self;
-//         &data[self.index(coor)]
-//     }
-// }
-
-// impl<T: Clone> IndexMut<(i32, i32)> for Buffer<T> {
-//     fn index_mut(&mut self, coor: (i32, i32)) -> &mut T {
-//         let i = self.index(coor);
-//         let Self { data, rect } = self;
-//         &mut data[i]
-//     }
-// }
+impl<T: Clone> Default for Buffer<T> {
+    fn default() -> Self {
+        Self {
+            rect: Rect::new(),
+            data: Vec::new(),
+        }
+    }
+}
 
 pub struct Iter<'a, T: Clone>(std::iter::Zip<std::slice::Iter<'a, T>, super::rect::Iter<'a>>);
 
