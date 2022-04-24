@@ -3,14 +3,13 @@ mod vt100;
 pub use vt100::Vt100;
 
 use crate::{
-    tui::Color,
+    tui::{Color, Event},
     util::{LoggerServer, Result},
 };
-use crossterm::event::Event;
 use std::time::Duration;
 
 pub trait Backend {
-    fn event(&mut self, period: Duration) -> Result<Option<Event>>;
+    fn event(&mut self, event_period: Duration, update_period: Duration) -> Result<Option<Event>>;
     fn print(&mut self, txt: &str) -> Result<&mut Self>;
     fn gotoxy(&mut self, x: i32, y: i32) -> Result<&mut Self>;
     fn fg(&mut self, c: Color) -> Result<&mut Self>;

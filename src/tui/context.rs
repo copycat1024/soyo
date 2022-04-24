@@ -1,20 +1,21 @@
 use crate::{
-    tui::{backend::Backend, Color, Frame, Letter, Rect},
+    tui::{backend::Backend, Color, Event, Frame, Letter, Rect},
     util::{LoggerClient, LoggerServer, Result},
 };
-use crossterm::event::Event;
 use std::{io::Write, time::Duration};
 
 #[derive(Clone, Copy)]
 struct Config {
-    period: Duration,
+    event_period: Duration,
+    update_period: Duration,
     clear_bg: Color,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            period: Duration::from_millis(100),
+            event_period: Duration::from_millis(10),
+            update_period: Duration::from_millis(1000),
             clear_bg: Color::BLACK,
         }
     }
@@ -50,15 +51,14 @@ impl<B: Backend> Context<B> {
     }
 
     pub fn event(&mut self) -> Result<Option<Event>> {
-        self.backend.event(self.config.period).map(|event| {
-            match event {
-                Some(event) => {
+        self.backend
+            .event(self.config.event_period, self.config.update_period)
+            .map(|event| {
+                if let Some(event) = event {
                     writeln!(self.logger, "{event:?}").unwrap();
-                }
-                None => {}
-            }
-            self.frame.map_event(event)
-        })
+                };
+                self.frame.map_event(event)
+            })
     }
 
     pub fn render<F>(&mut self, rect: Rect, z: i32, renderer: F)

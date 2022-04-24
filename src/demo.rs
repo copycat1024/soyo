@@ -1,6 +1,5 @@
-use crossterm::event::Event;
 use soyo::{
-    tui::{backend::Vt100, Color, Context, Rect},
+    tui::{backend::Vt100, Color, Context, Event, Rect},
     util::{LoggerServer, Result},
 };
 use std::io::stdout;
@@ -16,7 +15,7 @@ fn main() -> Result {
         'main: loop {
             if let Some(e) = ctx.event()? {
                 match e {
-                    Event::Key(_) => {
+                    Event::Key { .. } => {
                         break 'main;
                     }
                     _ => {}
