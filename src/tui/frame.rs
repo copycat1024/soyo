@@ -1,8 +1,7 @@
 use crate::{
-    tui::{Backend, Buffer, Color, Letter, Rect, Slot},
+    tui::{Backend, Buffer, Color, Event, Letter, Rect, Slot},
     util::{LoggerClient, LoggerServer, Result},
 };
-use crossterm::event::Event;
 
 #[derive(Default)]
 pub struct Frame {
@@ -14,7 +13,7 @@ impl Frame {
     pub fn map_event(&mut self, event: Option<Event>) -> Option<Event> {
         if let Some(event) = event {
             match event {
-                Event::Resize(w, h) => {
+                Event::Resize { w, h } => {
                     if self.resize(w as i32, h as i32) {
                         Some(event)
                     } else {

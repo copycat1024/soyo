@@ -1,10 +1,10 @@
 use crate::{
-    tui::{Backend, Color},
+    tui::{Backend, Color, Event, Key},
     util::{LoggerClient, LoggerServer, Result},
 };
 use crossterm::{
     cursor::{Hide, MoveTo, Show},
-    event::{poll, read, Event},
+    event::{poll, read, KeyCode},
     style::{Print, ResetColor, SetBackgroundColor, SetForegroundColor},
     terminal::{
         disable_raw_mode, enable_raw_mode, Clear, ClearType, DisableLineWrap, EnableLineWrap,
@@ -12,11 +12,15 @@ use crossterm::{
     },
     ExecutableCommand, QueueableCommand,
 };
-use std::{io::Write, time::Duration};
+use std::{
+    io::Write,
+    time::{Duration, Instant},
+};
 
 pub struct Vt100<W: Write> {
     writer: W,
     logger: LoggerClient,
+    last_update: Instant,
 }
 
 impl<W: Write> Vt100<W> {
@@ -25,17 +29,36 @@ impl<W: Write> Vt100<W> {
         Self {
             writer,
             logger: LoggerClient::default(),
+            last_update: Instant::now(),
         }
     }
 }
 
 impl<W: Write> Backend for Vt100<W> {
-    fn event(&mut self, period: Duration) -> Result<Option<Event>> {
-        if poll(period)? {
-            read().map(Some).map_err(|err| err.into())
+    fn event(&mut self, event_period: Duration, update_period: Duration) -> Result<Option<Event>> {
+        let event = if poll(event_period)? {
+            match read()? {
+                crossterm::event::Event::Key(key) => {
+                    map_key(key.code).map(|key| Event::Key { key })
+                }
+                crossterm::event::Event::Resize(w, h) => Some(Event::Resize {
+                    w: w as i32,
+                    h: h as i32,
+                }),
+                _ => None,
+            }
         } else {
-            Ok(None)
-        }
+            let now = Instant::now();
+            let delta = now.duration_since(self.last_update);
+            if delta > update_period {
+                self.last_update = now;
+                Some(Event::Update { delta })
+            } else {
+                None
+            }
+        };
+
+        Ok(event)
     }
 
     fn print(&mut self, txt: &str) -> Result<&mut Self> {
@@ -85,7 +108,7 @@ impl<W: Write> Drop for Vt100<W> {
     }
 }
 
-pub fn enter<W: Write>(writer: &mut W) -> Result {
+fn enter<W: Write>(writer: &mut W) -> Result {
     enable_raw_mode()?;
     writer
         .execute(DisableLineWrap)?
@@ -94,7 +117,7 @@ pub fn enter<W: Write>(writer: &mut W) -> Result {
     Ok(())
 }
 
-pub fn leave<W: Write>(writer: &mut W) -> Result {
+fn leave<W: Write>(writer: &mut W) -> Result {
     disable_raw_mode()?;
     writer
         .execute(LeaveAlternateScreen)?
@@ -104,4 +127,13 @@ pub fn leave<W: Write>(writer: &mut W) -> Result {
         .execute(MoveTo(0, 0))?
         .execute(Show)?;
     Ok(())
+}
+
+fn map_key(key: KeyCode) -> Option<Key> {
+    match key {
+        KeyCode::Char(c) => Some(Key(c)),
+        KeyCode::Enter => Some(Key::ENTER),
+        KeyCode::Esc => Some(Key::ESC),
+        _ => None,
+    }
 }

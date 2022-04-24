@@ -23,7 +23,7 @@ impl<T: Clone> Buffer<T> {
         let Self { rect, .. } = self;
         let index = (y * rect.w + x) as usize;
 
-        if x >= 0 || y >= 0 || x < rect.w || y < rect.h {
+        if x >= 0 && y >= 0 && x < rect.w && y < rect.h {
             Some(index)
         } else {
             None
