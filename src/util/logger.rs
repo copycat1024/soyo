@@ -1,5 +1,5 @@
 use std::{
-    cell::{RefCell, RefMut},
+    cell::{Ref, RefCell},
     io::{Result, Write},
     rc::{Rc, Weak},
 };
@@ -18,7 +18,7 @@ impl LoggerServer {
     pub fn print_ascii(&self) {
         let mut null_count = 0_usize;
 
-        for c in self.data.borrow().iter() {
+        for c in self.get_data().iter() {
             if *c == 0 {
                 null_count += 1;
             } else {
@@ -41,9 +41,13 @@ impl LoggerServer {
     }
 
     pub fn print_raw(&self) {
-        let data_vec = &self.data.borrow();
-        let data_str = std::str::from_utf8(data_vec).expect("Cannot convert log from UTF-8");
+        let data_vec = self.get_data();
+        let data_str = std::str::from_utf8(&data_vec).expect("Cannot convert log from UTF-8");
         println!("{data_str}");
+    }
+
+    fn get_data(&self) -> Ref<Vec<u8>> {
+        self.data.borrow()
     }
 }
 

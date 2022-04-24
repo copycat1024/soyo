@@ -21,9 +21,9 @@ impl Default for Config {
     }
 }
 
-pub struct Context<'a, B: Backend> {
+pub struct Context<B: Backend> {
     // external components
-    backend: &'a mut B,
+    backend: B,
     logger: LoggerClient,
 
     // internal components
@@ -31,8 +31,8 @@ pub struct Context<'a, B: Backend> {
     config: Config,
 }
 
-impl<'a, B: Backend> Context<'a, B> {
-    pub fn compose(backend: &'a mut B, logserver: Option<&LoggerServer>) -> Self {
+impl<B: Backend> Context<B> {
+    pub fn compose(mut backend: B, logserver: Option<&LoggerServer>) -> Self {
         let mut frame = Frame::default();
         let mut logger = LoggerClient::default();
 
@@ -71,11 +71,11 @@ impl<'a, B: Backend> Context<'a, B> {
 
     pub fn draw(&mut self) -> Result {
         let Self { frame, backend, .. } = self;
-        frame.draw(*backend)
+        frame.draw(backend)
     }
 
     pub fn clear(&mut self) -> Result {
         let Self { frame, backend, .. } = self;
-        frame.clear(*backend, self.config.clear_bg)
+        frame.clear(backend, self.config.clear_bg)
     }
 }
