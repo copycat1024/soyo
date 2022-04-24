@@ -1,8 +1,8 @@
 use crate::{
-    tui::{backend::Backend, Frame, Letter, Rect},
+    tui::{backend::Backend, Color, Frame, Letter, Rect},
     util::{LoggerClient, LoggerServer, Result},
 };
-use crossterm::{event::Event, style::Color};
+use crossterm::event::Event;
 use std::{io::Write, time::Duration};
 
 #[derive(Clone, Copy)]
@@ -15,7 +15,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             period: Duration::from_millis(100),
-            clear_bg: Color::Red,
+            clear_bg: Color::BLACK,
         }
     }
 }

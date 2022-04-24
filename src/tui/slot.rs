@@ -1,5 +1,4 @@
-use crate::tui::Letter;
-use crossterm::style::Color;
+use crate::tui::{Color, Letter};
 
 #[derive(Clone)]
 pub struct Slot {
@@ -12,8 +11,8 @@ impl Slot {
         Self {
             z: 0,
             letter: Letter {
-                fg: Color::Reset.into(),
-                bg: Color::Reset.into(),
+                fg: Color::WHITE.into(),
+                bg: Color::BLACK.into(),
                 c: '\0'.into(),
             },
         }

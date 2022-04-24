@@ -1,11 +1,11 @@
 use crate::{
-    tui::Backend,
+    tui::{Backend, Color},
     util::{LoggerClient, LoggerServer, Result},
 };
 use crossterm::{
     cursor::{Hide, MoveTo, Show},
     event::{poll, read, Event},
-    style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
+    style::{Print, ResetColor, SetBackgroundColor, SetForegroundColor},
     terminal::{
         disable_raw_mode, enable_raw_mode, Clear, ClearType, DisableLineWrap, EnableLineWrap,
         EnterAlternateScreen, LeaveAlternateScreen,
@@ -50,13 +50,15 @@ impl<W: Write> Backend for Vt100<W> {
         Ok(self)
     }
 
-    fn fg(&mut self, c: Color) -> Result<&mut Self> {
-        self.writer.queue(SetForegroundColor(c))?;
+    fn fg(&mut self, color: Color) -> Result<&mut Self> {
+        let color = crossterm::style::Color::AnsiValue(color.0);
+        self.writer.queue(SetForegroundColor(color))?;
         Ok(self)
     }
 
-    fn bg(&mut self, c: Color) -> Result<&mut Self> {
-        self.writer.queue(SetBackgroundColor(c))?;
+    fn bg(&mut self, color: Color) -> Result<&mut Self> {
+        let color = crossterm::style::Color::AnsiValue(color.0);
+        self.writer.queue(SetBackgroundColor(color))?;
         Ok(self)
     }
 

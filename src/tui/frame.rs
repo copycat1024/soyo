@@ -1,8 +1,8 @@
 use crate::{
-    tui::{Backend, Buffer, Letter, Rect, Slot},
+    tui::{Backend, Buffer, Color, Letter, Rect, Slot},
     util::{LoggerClient, LoggerServer, Result},
 };
-use crossterm::{event::Event, style::Color};
+use crossterm::event::Event;
 
 #[derive(Default)]
 pub struct Frame {
@@ -43,8 +43,6 @@ impl Frame {
     }
 
     pub fn draw<B: Backend>(&self, backend: &mut B) -> Result {
-        // writeln!(backend.logger(), "Draw()");
-
         let mut seq = Sequencer::new(backend);
         let x0 = self.buffer.rect().x;
 
@@ -84,8 +82,8 @@ impl<'a, B: Backend> Sequencer<'a, B> {
     fn new(backend: &'a mut B) -> Self {
         Self {
             backend,
-            fg: Color::Reset,
-            bg: Color::Reset,
+            fg: Color::WHITE,
+            bg: Color::BLACK,
             buf: String::from(""),
         }
     }

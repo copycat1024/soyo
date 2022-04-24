@@ -1,5 +1,4 @@
-use crate::util::Hot;
-use crossterm::style::Color;
+use crate::{tui::Color, util::Hot};
 
 #[derive(Clone)]
 pub struct Letter {
