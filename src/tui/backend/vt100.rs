@@ -16,12 +16,12 @@ use std::{
     time::Duration,
 };
 
-pub struct CrosstermBackend<W: Write> {
+pub struct Vt100<W: Write> {
     writer: W,
     logger: LoggerClient,
 }
 
-impl<W: Write> CrosstermBackend<W> {
+impl<W: Write> Vt100<W> {
     pub fn new(mut writer: W) -> Self {
         enter(&mut writer).expect("Cannot enter crossterm.");
         Self {
@@ -31,7 +31,7 @@ impl<W: Write> CrosstermBackend<W> {
     }
 }
 
-impl<W: Write> Backend for CrosstermBackend<W> {
+impl<W: Write> Backend for Vt100<W> {
     fn event(&mut self, period: Duration) -> Result<Option<Event>> {
         if poll(period)? {
             read().map(Some).map_err(|err| err.into())
@@ -48,7 +48,7 @@ impl<W: Write> Backend for CrosstermBackend<W> {
 
     fn gotoxy(&mut self, x: i32, y: i32) -> Result<&mut Self> {
         self.writer.queue(MoveTo(x as u16, y as u16))?;
-        writeln!(self.logger, "MoveTo('{x},{y}')").unwrap();
+        writeln!(self.logger, "MoveTo({x},{y})").unwrap();
         Ok(self)
     }
 
@@ -79,7 +79,7 @@ impl<W: Write> Backend for CrosstermBackend<W> {
     }
 }
 
-impl<W: Write> Drop for CrosstermBackend<W> {
+impl<W: Write> Drop for Vt100<W> {
     fn drop(&mut self) {
         leave(&mut self.writer).expect("Cannot leave crossterm.");
     }

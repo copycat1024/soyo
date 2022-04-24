@@ -1,6 +1,6 @@
 use crossterm::{event::Event, style::Color};
 use soyo::{
-    tui::{backend::CrosstermBackend, Context, Rect},
+    tui::{backend::Vt100, Context, Rect},
     util::{LoggerServer, Result},
 };
 use std::io::stdout;
@@ -9,8 +9,8 @@ fn main() -> Result {
     let mut logger = LoggerServer::default();
 
     {
-        let mut backend = CrosstermBackend::new(stdout());
-        let mut ctx = Context::compose(&mut backend, Some(&mut logger));
+        let backend = Vt100::new(stdout());
+        let mut ctx = Context::compose(backend, Some(&mut logger));
         ctx.clear()?;
 
         'main: loop {

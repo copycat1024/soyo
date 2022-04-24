@@ -1,6 +1,6 @@
-mod ct;
+mod vt100;
 
-pub use ct::CrosstermBackend;
+pub use vt100::Vt100;
 
 use crate::util::{LoggerServer, Result};
 use crossterm::{event::Event, style::Color};
