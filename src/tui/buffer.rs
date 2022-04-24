@@ -1,5 +1,4 @@
-use super::Rect;
-use std::ops::{Index, IndexMut};
+use crate::tui::Rect;
 
 pub struct Buffer<T: Clone> {
     rect: Rect,

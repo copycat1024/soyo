@@ -1,5 +1,7 @@
-use super::Backend;
-use crate::util::{LoggerClient, LoggerServer, Result};
+use crate::{
+    tui::Backend,
+    util::{LoggerClient, LoggerServer, Result},
+};
 use crossterm::{
     cursor::{Hide, MoveTo, Show},
     event::{poll, read, Event},
@@ -10,11 +12,7 @@ use crossterm::{
     },
     ExecutableCommand, QueueableCommand,
 };
-use std::{
-    io::Write,
-    rc::{Rc, Weak},
-    time::Duration,
-};
+use std::{io::Write, time::Duration};
 
 pub struct Vt100<W: Write> {
     writer: W,

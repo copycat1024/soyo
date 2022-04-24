@@ -1,10 +1,8 @@
-use super::{Backend, Buffer, Letter, Rect, Slot};
-use crate::util::{Hot, LoggerClient, LoggerServer, Result};
-use crossterm::{event::Event, style::Color};
-use std::{
-    fmt::Display,
-    ops::{Index, IndexMut},
+use crate::{
+    tui::{Backend, Buffer, Letter, Rect, Slot},
+    util::{LoggerClient, LoggerServer, Result},
 };
+use crossterm::{event::Event, style::Color};
 
 #[derive(Default)]
 pub struct Frame {
@@ -34,8 +32,6 @@ impl Frame {
     where
         F: Fn(i32, i32, &mut Letter),
     {
-        use std::io::Write;
-
         for (x, y) in rect.iter(false) {
             if let Some(slot) = self.buffer.get_mut(rect.x + x, rect.y + y) {
                 if z > slot.z {

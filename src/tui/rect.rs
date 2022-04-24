@@ -1,5 +1,3 @@
-use crate::util::Hot;
-
 #[derive(Clone, Copy, Default)]
 pub struct Rect {
     pub x: i32,

@@ -1,10 +1,9 @@
-use super::{backend::Backend, Frame, Letter, Rect};
-use crate::util::{LoggerClient, LoggerServer, Result};
-use crossterm::{
-    event::{poll, read, Event, KeyEvent},
-    style::Color,
+use crate::{
+    tui::{backend::Backend, Frame, Letter, Rect},
+    util::{LoggerClient, LoggerServer, Result},
 };
-use std::{cell::Cell, io::Write, rc::Weak, time::Duration};
+use crossterm::{event::Event, style::Color};
+use std::{io::Write, time::Duration};
 
 #[derive(Clone, Copy)]
 struct Config {
