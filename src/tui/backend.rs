@@ -2,9 +2,12 @@ mod vt100;
 
 pub use vt100::Vt100;
 
-use crate::util::{LoggerServer, Result};
-use crossterm::{event::Event, style::Color};
-use std::{io::Write, time::Duration};
+use crate::{
+    tui::Color,
+    util::{LoggerServer, Result},
+};
+use crossterm::event::Event;
+use std::time::Duration;
 
 pub trait Backend {
     fn event(&mut self, period: Duration) -> Result<Option<Event>>;

@@ -1,10 +1,9 @@
-use super::{backend::Backend, Frame, Letter, Rect};
-use crate::util::{LoggerClient, LoggerServer, Result};
-use crossterm::{
-    event::{poll, read, Event, KeyEvent},
-    style::Color,
+use crate::{
+    tui::{backend::Backend, Color, Frame, Letter, Rect},
+    util::{LoggerClient, LoggerServer, Result},
 };
-use std::{cell::Cell, io::Write, rc::Weak, time::Duration};
+use crossterm::event::Event;
+use std::{io::Write, time::Duration};
 
 #[derive(Clone, Copy)]
 struct Config {
@@ -16,7 +15,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             period: Duration::from_millis(100),
-            clear_bg: Color::Red,
+            clear_bg: Color::BLACK,
         }
     }
 }

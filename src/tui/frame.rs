@@ -1,10 +1,8 @@
-use super::{Backend, Buffer, Letter, Rect, Slot};
-use crate::util::{Hot, LoggerClient, LoggerServer, Result};
-use crossterm::{event::Event, style::Color};
-use std::{
-    fmt::Display,
-    ops::{Index, IndexMut},
+use crate::{
+    tui::{Backend, Buffer, Color, Letter, Rect, Slot},
+    util::{LoggerClient, LoggerServer, Result},
 };
+use crossterm::event::Event;
 
 #[derive(Default)]
 pub struct Frame {
@@ -34,8 +32,6 @@ impl Frame {
     where
         F: Fn(i32, i32, &mut Letter),
     {
-        use std::io::Write;
-
         for (x, y) in rect.iter(false) {
             if let Some(slot) = self.buffer.get_mut(rect.x + x, rect.y + y) {
                 if z > slot.z {
@@ -47,8 +43,6 @@ impl Frame {
     }
 
     pub fn draw<B: Backend>(&self, backend: &mut B) -> Result {
-        // writeln!(backend.logger(), "Draw()");
-
         let mut seq = Sequencer::new(backend);
         let x0 = self.buffer.rect().x;
 
@@ -88,8 +82,8 @@ impl<'a, B: Backend> Sequencer<'a, B> {
     fn new(backend: &'a mut B) -> Self {
         Self {
             backend,
-            fg: Color::Reset,
-            bg: Color::Reset,
+            fg: Color::WHITE,
+            bg: Color::BLACK,
             buf: String::from(""),
         }
     }

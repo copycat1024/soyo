@@ -1,6 +1,6 @@
-use crossterm::{event::Event, style::Color};
+use crossterm::event::Event;
 use soyo::{
-    tui::{backend::Vt100, Context, Rect},
+    tui::{backend::Vt100, Color, Context, Rect},
     util::{LoggerServer, Result},
 };
 use std::io::stdout;
@@ -27,12 +27,12 @@ fn main() -> Result {
             rect.xywh(0, 0, 5, 5);
             ctx.render(rect, 1, |_, _, letter| {
                 *letter.c = 'X';
-                *letter.bg = Color::Blue;
+                *letter.bg = Color::BLUE;
             });
             rect.xywh(2, 2, 5, 5);
             ctx.render(rect, 2, |_, _, letter| {
                 *letter.c = 'O';
-                *letter.bg = Color::Blue;
+                *letter.bg = Color::BLUE;
             });
 
             ctx.draw()?;
