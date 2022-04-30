@@ -17,7 +17,7 @@ impl Write for Client {
             if depot.enabled(self.tag) {
                 depot.data.write(buf)
             } else {
-                Ok(0)
+                Ok(buf.len())
             }
         } else {
             Ok(buf.len())
