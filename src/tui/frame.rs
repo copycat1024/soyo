@@ -1,12 +1,13 @@
 use crate::{
+    logger::{Client, Server},
     tui::{Backend, Buffer, Color, Event, Letter, Rect, Slot},
-    util::{LoggerClient, LoggerServer, Result},
+    util::Result,
 };
 
 #[derive(Default)]
 pub struct Frame {
     buffer: Buffer<Slot>,
-    logger: LoggerClient,
+    logger: Client,
 }
 
 impl Frame {
@@ -65,8 +66,8 @@ impl Frame {
         self.buffer.resize(w, h, Slot::new())
     }
 
-    pub fn set_logger(&mut self, logger: &LoggerServer) {
-        self.logger = logger.client();
+    pub fn set_logger(&mut self, logger: &Server) {
+        self.logger = logger.client(1);
     }
 }
 

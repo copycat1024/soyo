@@ -1,6 +1,7 @@
 use crate::{
+    logger::{Client, Server, Tag},
     tui::{backend::Backend, Color, Event, Frame, Letter, Rect},
-    util::{LoggerClient, LoggerServer, Result},
+    util::Result,
 };
 use std::{io::Write, time::Duration};
 
@@ -24,7 +25,7 @@ impl Default for Config {
 pub struct Context<B: Backend> {
     // external components
     backend: B,
-    logger: LoggerClient,
+    event_logger: Client,
 
     // internal components
     frame: Frame,
@@ -32,19 +33,22 @@ pub struct Context<B: Backend> {
 }
 
 impl<B: Backend> Context<B> {
-    pub fn compose(mut backend: B, logserver: Option<&LoggerServer>) -> Self {
+    pub fn compose(mut backend: B, server: Option<&Server>) -> Self {
         let mut frame = Frame::default();
-        let mut logger = LoggerClient::default();
+        let event_logger = if let Some(server) = server {
+            // set component logger
+            frame.set_logger(server);
+            backend.set_logger(server);
 
-        if let Some(logserver) = logserver {
-            frame.set_logger(logserver);
-            backend.set_logger(logserver);
-            logger = logserver.client();
-        }
+            // create event logger
+            server.client(Tag::Event)
+        } else {
+            Client::default()
+        };
 
         Self {
             backend,
-            logger,
+            event_logger,
             frame,
             config: Config::default(),
         }
@@ -55,7 +59,7 @@ impl<B: Backend> Context<B> {
             .event(self.config.event_period, self.config.update_period)
             .map(|event| {
                 if let Some(event) = event {
-                    writeln!(self.logger, "{event:?}").unwrap();
+                    writeln!(self.event_logger, "{event:?}").unwrap();
                 };
                 self.frame.map_event(event)
             })

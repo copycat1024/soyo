@@ -1,6 +1,7 @@
 use crate::{
+    logger::{Client, Server, Tag},
     tui::{Backend, Color, Event, Key},
-    util::{LoggerClient, LoggerServer, Result},
+    util::Result,
 };
 use crossterm::{
     cursor::{Hide, MoveTo, Show},
@@ -19,7 +20,7 @@ use std::{
 
 pub struct Vt100<W: Write> {
     writer: W,
-    logger: LoggerClient,
+    logger: Client,
     last_update: Instant,
 }
 
@@ -28,7 +29,7 @@ impl<W: Write> Vt100<W> {
         enter(&mut writer).expect("Cannot enter crossterm.");
         Self {
             writer,
-            logger: LoggerClient::default(),
+            logger: Client::default(),
             last_update: Instant::now(),
         }
     }
@@ -97,8 +98,8 @@ impl<W: Write> Backend for Vt100<W> {
         Ok(self)
     }
 
-    fn set_logger(&mut self, logger: &LoggerServer) {
-        self.logger = logger.client();
+    fn set_logger(&mut self, logger: &Server) {
+        self.logger = logger.client(Tag::Backend);
     }
 }
 
