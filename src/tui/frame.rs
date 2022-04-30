@@ -1,5 +1,4 @@
 use crate::{
-    logger::{Client, Server},
     tui::{Backend, Buffer, Color, Event, Letter, Rect, Slot},
     util::Result,
 };
@@ -7,7 +6,6 @@ use crate::{
 #[derive(Default)]
 pub struct Frame {
     buffer: Buffer<Slot>,
-    logger: Client,
 }
 
 impl Frame {
@@ -57,17 +55,16 @@ impl Frame {
         Ok(())
     }
 
-    pub fn clear<B: Backend>(&self, backend: &mut B, c: Color) -> Result {
+    pub fn clear<B: Backend>(&mut self, backend: &mut B, c: Color) -> Result {
+        for (c, _, _) in self.buffer.iter_mut(true) {
+            *c = Slot::new();
+        }
         backend.bg(c)?.clear()?;
         Ok(())
     }
 
     pub fn resize(&mut self, w: i32, h: i32) -> bool {
         self.buffer.resize(w, h, Slot::new())
-    }
-
-    pub fn set_logger(&mut self, logger: &Server) {
-        self.logger = logger.client(1);
     }
 }
 

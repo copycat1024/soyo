@@ -34,10 +34,8 @@ pub struct Context<B: Backend> {
 
 impl<B: Backend> Context<B> {
     pub fn compose(mut backend: B, server: Option<&Server>) -> Self {
-        let mut frame = Frame::default();
         let event_logger = if let Some(server) = server {
             // set component logger
-            frame.set_logger(server);
             backend.set_logger(server);
 
             // create event logger
@@ -49,7 +47,7 @@ impl<B: Backend> Context<B> {
         Self {
             backend,
             event_logger,
-            frame,
+            frame: Frame::default(),
             config: Config::default(),
         }
     }
