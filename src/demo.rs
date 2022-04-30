@@ -23,13 +23,12 @@ fn main() -> Result {
                 }
             }
 
-            let mut rect = Rect::new();
-            rect.xywh(0, 0, 5, 5);
+            let mut rect = Rect::xywh(0, 0, 5, 5);
             ctx.render(rect, 1, |_, _, letter| {
                 *letter.c = 'X';
                 *letter.bg = Color::BLUE;
             });
-            rect.xywh(2, 2, 5, 5);
+            rect = Rect::xywh(2, 2, 5, 5);
             ctx.render(rect, 2, |_, _, letter| {
                 *letter.c = 'O';
                 *letter.bg = Color::BLUE;

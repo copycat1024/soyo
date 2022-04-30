@@ -16,25 +16,17 @@ impl Rect {
         }
     }
 
-    pub fn dupe(&mut self, src: &Self) {
-        self.x = src.x;
-        self.y = src.y;
-        self.w = src.w;
-        self.h = src.h;
+    pub fn xywh(x: i32, y: i32, w: i32, h: i32) -> Self {
+        Self { x, y, w, h }
     }
 
-    pub fn xywh(&mut self, x: i32, y: i32, w: i32, h: i32) {
-        self.x = x;
-        self.y = y;
-        self.w = w;
-        self.h = h;
-    }
-
-    pub fn center(&mut self, src: &Rect, w: i32, h: i32) {
-        self.x = src.x + (src.w - w) / 2;
-        self.y = src.y + (src.h - h) / 2;
-        self.w = w;
-        self.h = h;
+    pub fn center(&self, w: i32, h: i32) -> Self {
+        Self {
+            x: self.x + (self.w - w) / 2,
+            y: self.y + (self.h - h) / 2,
+            w,
+            h,
+        }
     }
 
     pub fn inside(&self, src: &Self) -> bool {
