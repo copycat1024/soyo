@@ -3,8 +3,9 @@ mod vt100;
 pub use vt100::Vt100;
 
 use crate::{
+    logger::Server,
     tui::{Color, Event},
-    util::{LoggerServer, Result},
+    util::Result,
 };
 use std::time::Duration;
 
@@ -16,5 +17,5 @@ pub trait Backend {
     fn bg(&mut self, c: Color) -> Result<&mut Self>;
     fn clear(&mut self) -> Result<&mut Self>;
     fn flush(&mut self) -> Result<&mut Self>;
-    fn set_logger(&mut self, logger: &LoggerServer);
+    fn set_logger(&mut self, logger: &Server);
 }

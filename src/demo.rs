@@ -1,11 +1,12 @@
 use soyo::{
+    logger::Server,
     tui::{backend::Vt100, Color, Context, Event, Rect},
-    util::{LoggerServer, Result},
+    util::Result,
 };
 use std::io::stdout;
 
 fn main() -> Result {
-    let mut logger = LoggerServer::default();
+    let mut logger = Server::default();
 
     {
         let backend = Vt100::new(stdout());
