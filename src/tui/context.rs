@@ -30,6 +30,8 @@ pub struct Context<B: Backend> {
     // internal components
     frame: Frame,
     config: Config,
+    w: i32,
+    h: i32,
 }
 
 impl<B: Backend> Context<B> {
@@ -49,6 +51,8 @@ impl<B: Backend> Context<B> {
             event_logger,
             frame: Frame::default(),
             config: Config::default(),
+            w: 0,
+            h: 0,
         }
     }
 
@@ -58,6 +62,10 @@ impl<B: Backend> Context<B> {
             .map(|event| {
                 if let Some(event) = event {
                     writeln!(self.event_logger, "{event:?}").unwrap();
+                    if let Event::Resize { w, h } = event {
+                        self.w = w;
+                        self.h = h;
+                    }
                 };
                 self.frame.map_event(event)
             })
@@ -78,5 +86,9 @@ impl<B: Backend> Context<B> {
     pub fn clear(&mut self) -> Result {
         let Self { frame, backend, .. } = self;
         frame.clear(backend, self.config.clear_bg)
+    }
+
+    pub fn size(&self) -> (i32, i32) {
+        (self.w, self.h)
     }
 }
