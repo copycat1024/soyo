@@ -16,7 +16,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             event_period: Duration::from_millis(10),
-            update_period: Duration::from_millis(1000),
+            update_period: Duration::from_millis(100),
             clear_bg: Color::BLACK,
         }
     }
