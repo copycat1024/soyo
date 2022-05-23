@@ -40,7 +40,7 @@ impl Frame {
         }
     }
 
-    pub fn draw<B: Backend>(&self, backend: &mut B) -> Result {
+    pub fn draw(&self, backend: &mut Box<dyn Backend>) -> Result {
         let mut seq = Sequencer::new(backend);
         let x0 = self.buffer.rect().x;
 
@@ -55,11 +55,13 @@ impl Frame {
         Ok(())
     }
 
-    pub fn clear<B: Backend>(&mut self, backend: &mut B, c: Color) -> Result {
+    pub fn clear(&mut self, backend: &mut Box<dyn Backend>, c: Color) -> Result {
         for (c, _, _) in self.buffer.iter_mut(true) {
             *c = Slot::new();
         }
-        backend.bg(c)?.clear()?;
+        backend.bg(c)?;
+        backend.clear()?;
+        backend.flush()?;
         Ok(())
     }
 
@@ -68,15 +70,15 @@ impl Frame {
     }
 }
 
-struct Sequencer<'a, B: Backend> {
-    backend: &'a mut B,
+struct Sequencer<'a> {
+    backend: &'a mut Box<dyn Backend>,
     fg: Color,
     bg: Color,
     buf: String,
 }
 
-impl<'a, B: Backend> Sequencer<'a, B> {
-    fn new(backend: &'a mut B) -> Self {
+impl<'a> Sequencer<'a> {
+    fn new(backend: &'a mut Box<dyn Backend>) -> Self {
         Self {
             backend,
             fg: Color::WHITE,

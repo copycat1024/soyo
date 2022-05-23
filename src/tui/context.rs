@@ -22,9 +22,9 @@ impl Default for Config {
     }
 }
 
-pub struct Context<B: Backend> {
+pub struct Context {
     // external components
-    backend: B,
+    backend: Box<dyn Backend>,
     event_logger: Client,
 
     // internal components
@@ -34,8 +34,8 @@ pub struct Context<B: Backend> {
     h: i32,
 }
 
-impl<B: Backend> Context<B> {
-    pub fn compose(mut backend: B, server: Option<&Server>) -> Self {
+impl Context {
+    pub fn compose<B: Backend>(mut backend: B, server: Option<&Server>) -> Self {
         let event_logger = if let Some(server) = server {
             // set component logger
             backend.set_logger(server);
@@ -47,7 +47,7 @@ impl<B: Backend> Context<B> {
         };
 
         Self {
-            backend,
+            backend: Box::new(backend),
             event_logger,
             frame: Frame::default(),
             config: Config::default(),
