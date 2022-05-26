@@ -1,5 +1,5 @@
 use crate::{
-    logger::{Client, Server, Tag},
+    logger::{log, Tag},
     tui::{Backend, Color, Event, Key},
     util::Result,
 };
@@ -20,7 +20,6 @@ use std::{
 
 pub struct Vt100<W: Write + 'static> {
     writer: W,
-    logger: Client,
     last_update: Instant,
 }
 
@@ -29,7 +28,6 @@ impl<W: Write + 'static> Vt100<W> {
         enter(&mut writer).expect("Cannot enter crossterm.");
         Self {
             writer,
-            logger: Client::default(),
             last_update: Instant::now(),
         }
     }
@@ -64,13 +62,13 @@ impl<W: Write + 'static> Backend for Vt100<W> {
 
     fn print(&mut self, txt: &str) -> Result {
         self.writer.queue(Print(txt))?;
-        writeln!(self.logger, "Print('{txt}')").unwrap();
+        writeln!(log(Tag::Backend), "Print('{txt}')");
         Ok(())
     }
 
     fn gotoxy(&mut self, x: i32, y: i32) -> Result {
         self.writer.queue(MoveTo(x as u16, y as u16))?;
-        writeln!(self.logger, "MoveTo({x},{y})").unwrap();
+        writeln!(log(Tag::Backend), "MoveTo({x},{y})");
         Ok(())
     }
 
@@ -96,10 +94,6 @@ impl<W: Write + 'static> Backend for Vt100<W> {
     fn flush(&mut self) -> Result {
         self.writer.flush()?;
         Ok(())
-    }
-
-    fn set_logger(&mut self, logger: &Server) {
-        self.logger = logger.client(Tag::Backend);
     }
 }
 

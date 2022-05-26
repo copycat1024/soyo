@@ -3,7 +3,6 @@ mod vt100;
 pub use vt100::Vt100;
 
 use crate::{
-    logger::Server,
     tui::{Color, Event},
     util::Result,
 };
@@ -17,5 +16,4 @@ pub trait Backend: 'static {
     fn bg(&mut self, c: Color) -> Result;
     fn clear(&mut self) -> Result;
     fn flush(&mut self) -> Result;
-    fn set_logger(&mut self, logger: &Server);
 }

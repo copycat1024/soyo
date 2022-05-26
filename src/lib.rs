@@ -1,3 +1,4 @@
+#![feature(once_cell)]
 #![warn(clippy::all)]
 
 pub mod logger;

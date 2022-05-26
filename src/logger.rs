@@ -1,9 +1,5 @@
-mod client;
-mod depot;
-mod server;
+mod main;
 mod tag;
 
-pub use client::Client;
-use depot::Depot;
-pub use server::Server;
+pub use main::{activate_logger, flush_logger, log};
 pub use tag::Tag;

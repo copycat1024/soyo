@@ -1,9 +1,9 @@
 use crate::{
-    logger::{Client, Server, Tag},
+    logger::{log, Tag},
     tui::{backend::Backend, Color, Event, Frame, Letter, Rect},
     util::Result,
 };
-use std::{io::Write, time::Duration};
+use std::time::Duration;
 
 #[derive(Clone, Copy)]
 struct Config {
@@ -25,7 +25,6 @@ impl Default for Config {
 pub struct Context {
     // external components
     backend: Box<dyn Backend>,
-    event_logger: Client,
 
     // internal components
     frame: Frame,
@@ -35,20 +34,9 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn compose<B: Backend>(mut backend: B, server: Option<&Server>) -> Self {
-        let event_logger = if let Some(server) = server {
-            // set component logger
-            backend.set_logger(server);
-
-            // create event logger
-            server.client(Tag::Event)
-        } else {
-            Client::default()
-        };
-
+    pub fn new<B: Backend>(backend: B) -> Self {
         Self {
             backend: Box::new(backend),
-            event_logger,
             frame: Frame::default(),
             config: Config::default(),
             w: 0,
@@ -61,7 +49,7 @@ impl Context {
             .event(self.config.event_period, self.config.update_period)
             .map(|event| {
                 if let Some(event) = event {
-                    writeln!(self.event_logger, "{event:?}").unwrap();
+                    writeln!(log(Tag::Event), "{event:?}");
                     if let Event::Resize { w, h } = event {
                         self.w = w;
                         self.h = h;
