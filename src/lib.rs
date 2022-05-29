@@ -1,6 +1,6 @@
 #![feature(once_cell)]
 #![warn(clippy::all)]
 
-pub mod logger;
+pub mod log;
 pub mod tui;
 pub mod util;

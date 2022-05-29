@@ -1,5 +1,5 @@
 use crate::{
-    logger::{log, Tag},
+    log::{log, Tag},
     tui::{Backend, Color, Event, Key},
     util::Result,
 };
