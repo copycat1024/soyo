@@ -1,12 +1,12 @@
 #[derive(Clone, Copy, Default)]
-pub struct Rect {
+pub struct Quad {
     pub x: i32,
     pub y: i32,
     pub w: i32,
     pub h: i32,
 }
 
-impl Rect {
+impl Quad {
     pub fn new() -> Self {
         Self {
             x: 0,
@@ -58,13 +58,13 @@ impl Rect {
 }
 
 pub struct Iter<'a> {
-    src: &'a Rect,
+    src: &'a Quad,
     abs: bool,
     i: i32,
 }
 
 impl<'a> Iter<'a> {
-    pub fn new(src: &'a Rect, abs: bool) -> Self {
+    pub fn new(src: &'a Quad, abs: bool) -> Self {
         Self { src, abs, i: 0 }
     }
 }

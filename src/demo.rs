@@ -1,6 +1,6 @@
 use soyo::{
     log::{enable_log, flush_log, Tag},
-    tui::{backend::Vt100, Color, Context, Event, Rect},
+    tui::{backend::Vt100, Color, Context, Event, Quad},
     util::Result,
 };
 use std::io::stdout;
@@ -18,12 +18,12 @@ fn main() -> Result {
                 break 'main;
             }
 
-            let mut rect = Rect::xywh(0, 0, 5, 5);
+            let mut rect = Quad::xywh(0, 0, 5, 5);
             ctx.render(rect, 1, |_, _, letter| {
                 *letter.c = 'X';
                 *letter.bg = Color::BLUE;
             });
-            rect = Rect::xywh(2, 2, 5, 5);
+            rect = Quad::xywh(2, 2, 5, 5);
             ctx.render(rect, 2, |_, _, letter| {
                 *letter.c = 'O';
                 *letter.bg = Color::BLUE;

@@ -1,6 +1,6 @@
 use crate::{
     log::{log, Tag},
-    tui::{backend::Backend, Color, Event, Frame, Letter, Rect},
+    tui::{backend::Backend, Color, Event, Frame, Letter, Quad},
     util::Result,
 };
 use std::time::Duration;
@@ -59,7 +59,7 @@ impl Context {
             })
     }
 
-    pub fn render<F>(&mut self, rect: Rect, z: i32, renderer: F)
+    pub fn render<F>(&mut self, rect: Quad, z: i32, renderer: F)
     where
         F: Fn(i32, i32, &mut Letter),
     {

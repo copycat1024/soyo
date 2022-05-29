@@ -1,5 +1,5 @@
 use crate::{
-    tui::{Backend, Buffer, Color, Event, Letter, Rect, Slot},
+    tui::{Backend, Buffer, Color, Event, Letter, Quad, Slot},
     util::Result,
 };
 
@@ -26,7 +26,7 @@ impl Frame {
         }
     }
 
-    pub fn render<F>(&mut self, rect: Rect, z: i32, renderer: F)
+    pub fn render<F>(&mut self, rect: Quad, z: i32, renderer: F)
     where
         F: Fn(i32, i32, &mut Letter),
     {
