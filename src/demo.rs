@@ -19,12 +19,12 @@ fn main() -> Result {
             }
 
             let mut rect = Quad::xywh(0, 0, 5, 5);
-            ctx.render(rect, 1, |_, _, letter| {
+            ctx.render(rect, 1, |_, letter| {
                 *letter.c = 'X';
                 *letter.bg = Color::BLUE;
             });
             rect = Quad::xywh(2, 2, 5, 5);
-            ctx.render(rect, 2, |_, _, letter| {
+            ctx.render(rect, 2, |_, letter| {
                 *letter.c = 'O';
                 *letter.bg = Color::BLUE;
             });

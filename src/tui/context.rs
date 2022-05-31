@@ -61,7 +61,7 @@ impl Context {
 
     pub fn render<F>(&mut self, rect: Quad, z: i32, renderer: F)
     where
-        F: Fn(i32, i32, &mut Letter),
+        F: Fn(Quad, &mut Letter),
     {
         self.frame.render(rect, z, renderer);
     }

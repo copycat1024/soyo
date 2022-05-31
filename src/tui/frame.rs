@@ -28,13 +28,14 @@ impl Frame {
 
     pub fn render<F>(&mut self, rect: Quad, z: i32, renderer: F)
     where
-        F: Fn(i32, i32, &mut Letter),
+        F: Fn(Quad, &mut Letter),
     {
         for (x, y) in rect.iter(false) {
             if let Some(slot) = self.buffer.get_mut(rect.x + x, rect.y + y) {
                 if z > slot.z {
                     slot.z = z;
-                    renderer(x, y, &mut slot.letter)
+                    let quad = Quad::xywh(x, y, rect.w, rect.h);
+                    renderer(quad, &mut slot.letter)
                 }
             }
         }
