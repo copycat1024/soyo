@@ -19,3 +19,11 @@ impl Render for Label {
         *letter.bg = Color::RED;
     }
 }
+
+impl Default for Label {
+    fn default() -> Self {
+        Self {
+            text: FlexVec::new(' '),
+        }
+    }
+}
