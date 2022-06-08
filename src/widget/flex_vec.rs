@@ -6,6 +6,16 @@ pub struct FlexVec<T> {
 }
 
 impl<T> FlexVec<T> {
+    pub fn from_iter<I>(iter: I, default: T) -> Self
+    where
+        I: IntoIterator<Item = T>,
+    {
+        Self {
+            data: iter.into_iter().collect(),
+            default,
+        }
+    }
+
     pub fn new(default: T) -> Self {
         Self {
             data: Vec::new(),
@@ -40,6 +50,10 @@ impl<T> Extend<T> for FlexVec<T> {
 }
 
 impl FlexVec<char> {
+    pub fn text(s: &str) -> Self {
+        Self::from_iter(s.chars(), ' ')
+    }
+
     pub fn write_fmt(&mut self, fmt: Arguments<'_>) {
         self.data = format!("{}", fmt).chars().collect();
     }
