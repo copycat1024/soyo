@@ -129,6 +129,12 @@ fn map_key(key: KeyCode) -> Option<Key> {
         KeyCode::Char(c) => Some(Key(c)),
         KeyCode::Enter => Some(Key::ENTER),
         KeyCode::Esc => Some(Key::ESC),
+
+        KeyCode::Up=>Some(Key::UP),
+        KeyCode::Down=>Some(Key::DOWN),
+        KeyCode::Left=>Some(Key::LEFT),
+        KeyCode::Right=>Some(Key::RIGHT),
+
         _ => None,
     }
 }
