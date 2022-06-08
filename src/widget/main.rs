@@ -1,5 +1,5 @@
-use super::{Composer, Render};
-use crate::tui::{Context, Quad};
+use super::{Composer, Layer, Render};
+use crate::tui::Context;
 
 pub struct Widget<T: Render> {
     pub widget: T,
@@ -14,8 +14,10 @@ impl<T: Render> Widget<T> {
         }
     }
 
-    pub fn render(&self, ctx: &mut Context, quad: Quad) {
-        let (quad, z) = self.composer.compose(quad, 0);
-        ctx.render(quad, z, |q, l| self.widget.render(q, l));
+    pub fn render(&self, ctx: &mut Context, layer: Layer) {
+        let layer = self.composer.compose(layer);
+        ctx.render(layer.quad(), layer.z_value(), |q, l| {
+            self.widget.render(q, l)
+        });
     }
 }

@@ -1,20 +1,20 @@
-use crate::tui::Quad;
+use super::Layer;
 
-pub trait ComposeFn: Fn(Quad, i32) -> (Quad, i32) + 'static {}
-impl<F> ComposeFn for F where F: Fn(Quad, i32) -> (Quad, i32) + 'static {}
+pub trait ComposeFn: Fn(Layer) -> Layer + 'static {}
+impl<F> ComposeFn for F where F: Fn(Layer) -> Layer + 'static {}
 
 pub struct Composer {
     func: Box<dyn ComposeFn>,
 }
 
 impl Composer {
-    pub fn compose(&self, quad: Quad, z: i32) -> (Quad, i32) {
-        (self.func)(quad, z)
+    pub fn compose(&self, layer: Layer) -> Layer {
+        (self.func)(layer)
     }
 
     pub fn set<F>(&mut self, func: F)
     where
-        F: Fn(Quad, i32) -> (Quad, i32) + 'static,
+        F: Fn(Layer) -> Layer + 'static,
     {
         self.func = Box::new(func);
     }
@@ -23,7 +23,7 @@ impl Composer {
 impl Default for Composer {
     fn default() -> Self {
         Self {
-            func: Box::new(|quad, z| (quad, z + 1)),
+            func: Box::new(|layer| layer.rise_z()),
         }
     }
 }
