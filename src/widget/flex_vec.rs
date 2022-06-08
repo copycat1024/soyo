@@ -30,6 +30,15 @@ impl<T> std::ops::Index<i32> for FlexVec<T> {
     }
 }
 
+impl<T> Extend<T> for FlexVec<T> {
+    fn extend<I>(&mut self, iter: I)
+    where
+        I: IntoIterator<Item = T>,
+    {
+        self.data.extend(iter)
+    }
+}
+
 impl FlexVec<char> {
     pub fn write_fmt(&mut self, fmt: Arguments<'_>) {
         self.data = format!("{}", fmt).chars().collect();
