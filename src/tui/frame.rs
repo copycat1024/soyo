@@ -32,7 +32,7 @@ impl Frame {
     {
         for (x, y) in rect.iter(false) {
             if let Some(slot) = self.buffer.get_mut(rect.x + x, rect.y + y) {
-                if z > slot.z {
+                if z >= slot.z {
                     slot.z = z;
                     let quad = Quad::xywh(x, y, rect.w, rect.h);
                     renderer(quad, &mut slot.letter)
