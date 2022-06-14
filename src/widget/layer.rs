@@ -23,6 +23,16 @@ impl Layer {
     pub fn rise_z(self) -> Self {
         self.set_z(self.z + 1)
     }
+
+    pub fn center(self, w: i32, h: i32) -> Self {
+        Self {
+            x: self.x + (self.w - w) / 2,
+            y: self.y + (self.h - h) / 2,
+            w,
+            h,
+            z: self.z,
+        }
+    }
 }
 
 impl Layer {
