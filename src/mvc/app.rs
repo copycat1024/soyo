@@ -59,6 +59,11 @@ where
             // update view
             self.update();
 
+            if self.flow.clear {
+                self.flow.clear = false;
+                ctx.clear()?;
+            }
+
             if self.flow.draw {
                 self.draw(ctx)?;
             }
