@@ -1,5 +1,6 @@
 #[derive(Clone, Copy)]
 pub enum Tag {
+    Debug,
     Event,
     Frame,
     Backend,

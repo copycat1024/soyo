@@ -1,5 +1,5 @@
 use crate::{
-    logger::{Client, Server, Tag},
+    log::{log, Tag},
     tui::{Backend, Color, Event, Key},
     util::Result,
 };
@@ -18,24 +18,22 @@ use std::{
     time::{Duration, Instant},
 };
 
-pub struct Vt100<W: Write> {
+pub struct Vt100<W: Write + 'static> {
     writer: W,
-    logger: Client,
     last_update: Instant,
 }
 
-impl<W: Write> Vt100<W> {
+impl<W: Write + 'static> Vt100<W> {
     pub fn new(mut writer: W) -> Self {
         enter(&mut writer).expect("Cannot enter crossterm.");
         Self {
             writer,
-            logger: Client::default(),
             last_update: Instant::now(),
         }
     }
 }
 
-impl<W: Write> Backend for Vt100<W> {
+impl<W: Write + 'static> Backend for Vt100<W> {
     fn event(&mut self, event_period: Duration, update_period: Duration) -> Result<Option<Event>> {
         let event = if poll(event_period)? {
             match read()? {
@@ -62,44 +60,40 @@ impl<W: Write> Backend for Vt100<W> {
         Ok(event)
     }
 
-    fn print(&mut self, txt: &str) -> Result<&mut Self> {
+    fn print(&mut self, txt: &str) -> Result {
         self.writer.queue(Print(txt))?;
-        writeln!(self.logger, "Print('{txt}')").unwrap();
-        Ok(self)
+        writeln!(log(Tag::Backend), "Print('{txt}')");
+        Ok(())
     }
 
-    fn gotoxy(&mut self, x: i32, y: i32) -> Result<&mut Self> {
+    fn gotoxy(&mut self, x: i32, y: i32) -> Result {
         self.writer.queue(MoveTo(x as u16, y as u16))?;
-        writeln!(self.logger, "MoveTo({x},{y})").unwrap();
-        Ok(self)
+        writeln!(log(Tag::Backend), "MoveTo({x},{y})");
+        Ok(())
     }
 
-    fn fg(&mut self, color: Color) -> Result<&mut Self> {
+    fn fg(&mut self, color: Color) -> Result {
         let color = crossterm::style::Color::AnsiValue(color.0);
         self.writer.queue(SetForegroundColor(color))?;
-        Ok(self)
+        Ok(())
     }
 
-    fn bg(&mut self, color: Color) -> Result<&mut Self> {
+    fn bg(&mut self, color: Color) -> Result {
         let color = crossterm::style::Color::AnsiValue(color.0);
         self.writer.queue(SetBackgroundColor(color))?;
-        Ok(self)
+        Ok(())
     }
 
-    fn clear(&mut self) -> Result<&mut Self> {
+    fn clear(&mut self) -> Result {
         self.writer
             .queue(ResetColor)?
             .queue(Clear(ClearType::All))?;
-        Ok(self)
+        Ok(())
     }
 
-    fn flush(&mut self) -> Result<&mut Self> {
+    fn flush(&mut self) -> Result {
         self.writer.flush()?;
-        Ok(self)
-    }
-
-    fn set_logger(&mut self, logger: &Server) {
-        self.logger = logger.client(Tag::Backend);
+        Ok(())
     }
 }
 
@@ -135,6 +129,12 @@ fn map_key(key: KeyCode) -> Option<Key> {
         KeyCode::Char(c) => Some(Key(c)),
         KeyCode::Enter => Some(Key::ENTER),
         KeyCode::Esc => Some(Key::ESC),
+
+        KeyCode::Up=>Some(Key::UP),
+        KeyCode::Down=>Some(Key::DOWN),
+        KeyCode::Left=>Some(Key::LEFT),
+        KeyCode::Right=>Some(Key::RIGHT),
+
         _ => None,
     }
 }

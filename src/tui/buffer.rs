@@ -1,7 +1,7 @@
-use crate::tui::Rect;
+use crate::tui::Quad;
 
 pub struct Buffer<T: Clone> {
-    rect: Rect,
+    rect: Quad,
     data: Vec<T>,
 }
 
@@ -40,7 +40,7 @@ impl<T: Clone> Buffer<T> {
         IterMut(data.iter_mut().zip(rect.iter(abs)))
     }
 
-    pub fn rect(&self) -> &Rect {
+    pub fn rect(&self) -> &Quad {
         &self.rect
     }
 
@@ -56,13 +56,13 @@ impl<T: Clone> Buffer<T> {
 impl<T: Clone> Default for Buffer<T> {
     fn default() -> Self {
         Self {
-            rect: Rect::new(),
+            rect: Quad::new(),
             data: Vec::new(),
         }
     }
 }
 
-pub struct Iter<'a, T: Clone>(std::iter::Zip<std::slice::Iter<'a, T>, super::rect::Iter<'a>>);
+pub struct Iter<'a, T: Clone>(std::iter::Zip<std::slice::Iter<'a, T>, super::quad::Iter<'a>>);
 
 impl<'a, T: Clone> Iterator for Iter<'a, T> {
     type Item = (&'a T, i32, i32);
@@ -72,7 +72,7 @@ impl<'a, T: Clone> Iterator for Iter<'a, T> {
     }
 }
 
-pub struct IterMut<'a, T: Clone>(std::iter::Zip<std::slice::IterMut<'a, T>, super::rect::Iter<'a>>);
+pub struct IterMut<'a, T: Clone>(std::iter::Zip<std::slice::IterMut<'a, T>, super::quad::Iter<'a>>);
 
 impl<'a, T: Clone> Iterator for IterMut<'a, T> {
     type Item = (&'a mut T, i32, i32);

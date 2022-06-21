@@ -1,13 +1,11 @@
 use crate::{
-    logger::{Client, Server},
-    tui::{Backend, Buffer, Color, Event, Letter, Rect, Slot},
+    tui::{Backend, Buffer, Color, Event, Letter, Quad, Slot},
     util::Result,
 };
 
 #[derive(Default)]
 pub struct Frame {
     buffer: Buffer<Slot>,
-    logger: Client,
 }
 
 impl Frame {
@@ -28,21 +26,22 @@ impl Frame {
         }
     }
 
-    pub fn render<F>(&mut self, rect: Rect, z: i32, renderer: F)
+    pub fn render<F>(&mut self, rect: Quad, z: i32, renderer: F)
     where
-        F: Fn(i32, i32, &mut Letter),
+        F: Fn(Quad, &mut Letter),
     {
         for (x, y) in rect.iter(false) {
             if let Some(slot) = self.buffer.get_mut(rect.x + x, rect.y + y) {
-                if z > slot.z {
+                if z >= slot.z {
                     slot.z = z;
-                    renderer(x, y, &mut slot.letter)
+                    let quad = Quad::xywh(x, y, rect.w, rect.h);
+                    renderer(quad, &mut slot.letter)
                 }
             }
         }
     }
 
-    pub fn draw<B: Backend>(&self, backend: &mut B) -> Result {
+    pub fn draw(&self, backend: &mut Box<dyn Backend>) -> Result {
         let mut seq = Sequencer::new(backend);
         let x0 = self.buffer.rect().x;
 
@@ -57,29 +56,30 @@ impl Frame {
         Ok(())
     }
 
-    pub fn clear<B: Backend>(&self, backend: &mut B, c: Color) -> Result {
-        backend.bg(c)?.clear()?;
+    pub fn clear(&mut self, backend: &mut Box<dyn Backend>, c: Color) -> Result {
+        for (c, _, _) in self.buffer.iter_mut(true) {
+            *c = Slot::new();
+        }
+        backend.bg(c)?;
+        backend.clear()?;
+        backend.flush()?;
         Ok(())
     }
 
     pub fn resize(&mut self, w: i32, h: i32) -> bool {
         self.buffer.resize(w, h, Slot::new())
     }
-
-    pub fn set_logger(&mut self, logger: &Server) {
-        self.logger = logger.client(1);
-    }
 }
 
-struct Sequencer<'a, B: Backend> {
-    backend: &'a mut B,
+struct Sequencer<'a> {
+    backend: &'a mut Box<dyn Backend>,
     fg: Color,
     bg: Color,
     buf: String,
 }
 
-impl<'a, B: Backend> Sequencer<'a, B> {
-    fn new(backend: &'a mut B) -> Self {
+impl<'a> Sequencer<'a> {
+    fn new(backend: &'a mut Box<dyn Backend>) -> Self {
         Self {
             backend,
             fg: Color::WHITE,

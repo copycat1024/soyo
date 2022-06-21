@@ -7,7 +7,7 @@ mod event;
 mod frame;
 mod key;
 mod letter;
-mod rect;
+mod quad;
 mod slot;
 
 pub use backend::Backend;
@@ -18,6 +18,6 @@ pub use event::Event;
 pub use frame::Frame;
 pub use key::Key;
 pub use letter::Letter;
-pub use rect::Rect;
+pub use quad::Quad;
 
 use slot::Slot;

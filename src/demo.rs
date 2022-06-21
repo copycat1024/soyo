@@ -1,36 +1,30 @@
 use soyo::{
-    logger::Server,
-    tui::{backend::Vt100, Color, Context, Event, Rect},
+    log::{enable_log, flush_log, Tag},
+    tui::{backend::Vt100, Color, Context, Event, Quad},
     util::Result,
 };
 use std::io::stdout;
 
 fn main() -> Result {
-    let mut logger = Server::default();
+    enable_log(Tag::Event);
 
     {
         let backend = Vt100::new(stdout());
-        let mut ctx = Context::compose(backend, Some(&mut logger));
+        let mut ctx = Context::new(backend);
         ctx.clear()?;
 
         'main: loop {
-            if let Some(e) = ctx.event()? {
-                match e {
-                    Event::Key { .. } => {
-                        break 'main;
-                    }
-                    _ => {}
-                }
+            if let Some(Event::Key { .. }) = ctx.event()? {
+                break 'main;
             }
 
-            let mut rect = Rect::new();
-            rect.xywh(0, 0, 5, 5);
-            ctx.render(rect, 1, |_, _, letter| {
+            let mut rect = Quad::xywh(0, 0, 5, 5);
+            ctx.render(rect, 1, |_, letter| {
                 *letter.c = 'X';
                 *letter.bg = Color::BLUE;
             });
-            rect.xywh(2, 2, 5, 5);
-            ctx.render(rect, 2, |_, _, letter| {
+            rect = Quad::xywh(2, 2, 5, 5);
+            ctx.render(rect, 2, |_, letter| {
                 *letter.c = 'O';
                 *letter.bg = Color::BLUE;
             });
@@ -39,7 +33,7 @@ fn main() -> Result {
         }
     }
 
-    logger.print_raw();
+    flush_log();
 
     Ok(())
 }

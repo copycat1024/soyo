@@ -1,9 +1,9 @@
 use crate::{
-    logger::{Client, Server, Tag},
-    tui::{backend::Backend, Color, Event, Frame, Letter, Rect},
+    log::{log, Tag},
+    tui::{backend::Backend, Color, Event, Frame, Letter, Quad},
     util::Result,
 };
-use std::{io::Write, time::Duration};
+use std::time::Duration;
 
 #[derive(Clone, Copy)]
 struct Config {
@@ -16,41 +16,31 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             event_period: Duration::from_millis(10),
-            update_period: Duration::from_millis(1000),
+            update_period: Duration::from_millis(100),
             clear_bg: Color::BLACK,
         }
     }
 }
 
-pub struct Context<B: Backend> {
+pub struct Context {
     // external components
-    backend: B,
-    event_logger: Client,
+    backend: Box<dyn Backend>,
 
     // internal components
     frame: Frame,
     config: Config,
+    w: i32,
+    h: i32,
 }
 
-impl<B: Backend> Context<B> {
-    pub fn compose(mut backend: B, server: Option<&Server>) -> Self {
-        let mut frame = Frame::default();
-        let event_logger = if let Some(server) = server {
-            // set component logger
-            frame.set_logger(server);
-            backend.set_logger(server);
-
-            // create event logger
-            server.client(Tag::Event)
-        } else {
-            Client::default()
-        };
-
+impl Context {
+    pub fn new<B: Backend>(backend: B) -> Self {
         Self {
-            backend,
-            event_logger,
-            frame,
+            backend: Box::new(backend),
+            frame: Frame::default(),
             config: Config::default(),
+            w: 0,
+            h: 0,
         }
     }
 
@@ -59,15 +49,19 @@ impl<B: Backend> Context<B> {
             .event(self.config.event_period, self.config.update_period)
             .map(|event| {
                 if let Some(event) = event {
-                    writeln!(self.event_logger, "{event:?}").unwrap();
+                    writeln!(log(Tag::Event), "{event:?}");
+                    if let Event::Resize { w, h } = event {
+                        self.w = w;
+                        self.h = h;
+                    }
                 };
                 self.frame.map_event(event)
             })
     }
 
-    pub fn render<F>(&mut self, rect: Rect, z: i32, renderer: F)
+    pub fn render<F>(&mut self, rect: Quad, z: i32, renderer: F)
     where
-        F: Fn(i32, i32, &mut Letter),
+        F: Fn(Quad, &mut Letter),
     {
         self.frame.render(rect, z, renderer);
     }
@@ -80,5 +74,9 @@ impl<B: Backend> Context<B> {
     pub fn clear(&mut self) -> Result {
         let Self { frame, backend, .. } = self;
         frame.clear(backend, self.config.clear_bg)
+    }
+
+    pub fn size(&self) -> (i32, i32) {
+        (self.w, self.h)
     }
 }
