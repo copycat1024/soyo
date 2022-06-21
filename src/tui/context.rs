@@ -1,6 +1,6 @@
 use crate::{
     log::{log, Tag},
-    tui::{backend::Backend, Color, Event, Frame, Letter, Quad},
+    tui::{backend::Backend, Color, Event, FrameBuffer, Letter, Quad},
     util::Result,
 };
 use std::time::Duration;
@@ -27,7 +27,7 @@ pub struct Context {
     backend: Box<dyn Backend>,
 
     // internal components
-    frame: Frame,
+    frame: FrameBuffer,
     config: Config,
     w: i32,
     h: i32,
@@ -37,7 +37,7 @@ impl Context {
     pub fn new<B: Backend>(backend: B) -> Self {
         Self {
             backend: Box::new(backend),
-            frame: Frame::default(),
+            frame: FrameBuffer::default(),
             config: Config::default(),
             w: 0,
             h: 0,

@@ -4,11 +4,11 @@ use crate::{
 };
 
 #[derive(Default)]
-pub struct Frame {
+pub struct FrameBuffer {
     buffer: Buffer<Slot>,
 }
 
-impl Frame {
+impl FrameBuffer {
     pub fn map_event(&mut self, event: Option<Event>) -> Option<Event> {
         if let Some(event) = event {
             match event {

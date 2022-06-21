@@ -2,7 +2,7 @@
 pub enum Tag {
     Debug,
     Event,
-    Frame,
+    FrameBuffer,
     Backend,
     Custom,
 }
