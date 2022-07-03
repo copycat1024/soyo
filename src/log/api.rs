@@ -1,4 +1,4 @@
-use super::{Logger, Tag};
+use super::{tag, Logger};
 use std::{lazy::SyncLazy, sync::Mutex};
 
 pub static DEPOT: SyncLazy<Mutex<String>> = SyncLazy::new(|| Mutex::new(String::new()));
@@ -11,7 +11,7 @@ pub fn log<T: Into<u8>>(tag: T) -> Logger {
 }
 
 pub fn debug() -> Logger {
-    log(Tag::Debug)
+    log(tag::DEBUG)
 }
 
 pub fn enable_log<T: Into<u8>>(tag: T) {

@@ -1,5 +1,5 @@
 use crate::{
-    log::{log, Tag},
+    log::{log, tag},
     tui::{Backend, Color, Event, Key},
     util::Result,
 };
@@ -62,13 +62,13 @@ impl<W: Write + 'static> Backend for Vt100<W> {
 
     fn print(&mut self, txt: &str) -> Result {
         self.writer.queue(Print(txt))?;
-        writeln!(log(Tag::Backend), "Print('{txt}')");
+        writeln!(log(tag::BACKEND), "Print('{txt}')");
         Ok(())
     }
 
     fn gotoxy(&mut self, x: i32, y: i32) -> Result {
         self.writer.queue(MoveTo(x as u16, y as u16))?;
-        writeln!(log(Tag::Backend), "MoveTo({x},{y})");
+        writeln!(log(tag::BACKEND), "MoveTo({x},{y})");
         Ok(())
     }
 
