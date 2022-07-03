@@ -10,6 +10,12 @@ pub struct AppItem {
     pub runtime: fn(ctx: &mut Context) -> Result<usize>,
 }
 
+impl AppItem {
+    pub const fn new(name: &'static str, runtime: fn(ctx: &mut Context) -> Result<usize>) -> Self {
+        Self { name, runtime }
+    }
+}
+
 pub fn launch(tags: &[u8], app_list: &[AppItem]) -> Result {
     for tag in tags {
         enable_log(*tag)

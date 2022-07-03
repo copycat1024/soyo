@@ -33,41 +33,42 @@ where
         }
     }
 
-    pub fn run(&mut self, ctx: &mut Context) -> Result<usize> {
+    pub fn run(control: Control<M, C>, ctx: &mut Context) -> Result<usize> {
+        let mut app = Self::new(control);
         let (w, h) = ctx.size();
 
-        self.resize(ctx, w, h)?;
+        app.resize(ctx, w, h)?;
 
         // main loop
         'main: loop {
             // handle native events
             while let Some(event) = ctx.event()? {
                 if let Event::Resize { w, h } = event {
-                    self.resize(ctx, w, h)?;
+                    app.resize(ctx, w, h)?;
                 }
 
-                self.dispatch(event);
+                app.dispatch(event);
             }
 
             // handle domain event
-            while let Some(event) = self.dispatch.event() {
-                self.model.reduce(event, &mut self.flow);
-                if self.flow.stop {
+            while let Some(event) = app.dispatch.event() {
+                app.model.reduce(event, &mut app.flow);
+                if app.flow.stop {
                     break 'main;
                 }
             }
 
             // update view
-            self.update();
+            app.update();
 
             // draw
-            self.view.draw(ctx, &mut self.flow)?;
+            app.view.draw(ctx, &mut app.flow)?;
         }
 
         // clean up app
         ctx.clear()?;
 
-        Ok(self.flow.code)
+        Ok(app.flow.code)
     }
 
     fn dispatch(&mut self, event: Event) {
