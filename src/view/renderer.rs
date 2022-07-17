@@ -39,4 +39,8 @@ impl<T: Render> Widget for Renderer<T> {
             self.widget.borrow().render(q, l)
         });
     }
+
+    fn resize(&mut self, _: i32, _: i32) {}
+
+    fn compose(&mut self) {}
 }

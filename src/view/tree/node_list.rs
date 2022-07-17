@@ -20,7 +20,8 @@ impl NodeList {
         let composer = Composer::new(widget);
         let ptr = composer.get_ref();
 
-        self.list.push(Node::from_composer(composer));
+        self.list
+            .push(Node::from_composer(SharedPtr::new(composer)));
         ptr
     }
 
