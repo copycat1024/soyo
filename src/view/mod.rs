@@ -1,13 +1,11 @@
 mod attribute;
 mod composer;
-mod frame;
 mod label;
 mod renderer;
 mod tree;
 
-pub use attribute::Attribute;
+pub use attribute::{Attribute, Frame};
 pub use composer::{Compose, ComposeHost, Composer};
-pub use frame::Frame;
 pub use label::Label;
 pub use renderer::{Render, RenderHost, Renderer};
-pub use tree::{Node, NodeList, NodeRef, Widget};
+pub use tree::{Node, NodeList, Widget};
