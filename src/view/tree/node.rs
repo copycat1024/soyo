@@ -5,20 +5,23 @@ use crate::{
     view::{Compose, Composer, Render, Renderer},
 };
 
-pub enum Node {
-    Compose(WeakPtr<dyn Widget>),
-    Render(WeakPtr<dyn Widget>),
+pub struct Node {
+    widget: WeakPtr<dyn Widget>,
 }
 
 impl Node {
     pub(super) fn from_composer<T: Compose>(widget: SharedPtr<Composer<T>>) -> Node {
         let widget: SharedPtr<dyn Widget> = widget.clone();
-        Self::Compose(widget.downgrade())
+        Self {
+            widget: widget.downgrade(),
+        }
     }
 
     pub(super) fn from_renderer<T: Render>(widget: SharedPtr<Renderer<T>>) -> Node {
         let widget: SharedPtr<dyn Widget> = widget.clone();
-        Self::Render(widget.downgrade())
+        Self {
+            widget: widget.downgrade(),
+        }
     }
 
     pub fn root<T: Compose>(view: T) -> (Self, NodeRef<T>) {
@@ -30,33 +33,20 @@ impl Node {
     }
 
     pub fn resize(&mut self, w: i32, h: i32) {
-        if let Self::Compose(node) = self {
-            if let Some(mut node) = node.upgrade() {
-                node.borrow_mut().resize(w, h);
-            }
+        if let Some(mut node) = self.widget.upgrade() {
+            node.borrow_mut().resize(w, h);
         }
     }
 
     pub fn compose(&mut self) {
-        if let Self::Compose(node) = self {
-            if let Some(mut node) = node.upgrade() {
-                node.borrow_mut().compose();
-            }
+        if let Some(mut node) = self.widget.upgrade() {
+            node.borrow_mut().compose();
         }
     }
 
     pub fn render(&self, ctx: &mut Context) {
-        match self {
-            Self::Compose(node) => {
-                if let Some(node) = node.upgrade() {
-                    node.borrow().render(ctx)
-                }
-            }
-            Self::Render(node) => {
-                if let Some(node) = node.upgrade() {
-                    node.borrow().render(ctx)
-                }
-            }
+        if let Some(node) = self.widget.upgrade() {
+            node.borrow().render(ctx)
         }
     }
 }

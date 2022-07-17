@@ -50,3 +50,15 @@ impl<T: Compose> Widget for Composer<T> {
         }
     }
 }
+
+pub struct ComposerHost<T: Compose> {
+    pub widget: SharedPtr<Composer<T>>,
+}
+
+impl<T: Compose> ComposerHost<T> {
+    pub fn new(widget: T) -> Self {
+        Self {
+            widget: SharedPtr::new(Composer::new(widget)),
+        }
+    }
+}
