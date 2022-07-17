@@ -1,12 +1,13 @@
-use super::NodeRef;
+use super::{NodeRef, Widget};
 use crate::{
     tui::Context,
-    view::{Compose, Composer, ComposerNode, Renderer},
+    util::{SharedPtr, WeakPtr},
+    view::{Compose, Composer, ComposerNode, Render, Renderer},
 };
 
 pub enum Node {
     Compose(ComposerNode),
-    Render(Renderer),
+    Render(WeakPtr<dyn Widget>),
 }
 
 impl Node {
@@ -14,8 +15,9 @@ impl Node {
         Self::Compose(widget.node())
     }
 
-    pub(super) fn from_renderer(widget: Renderer) -> Node {
-        Self::Render(widget)
+    pub(super) fn from_renderer<T: Render>(widget: SharedPtr<Renderer<T>>) -> Node {
+        let widget: SharedPtr<dyn Widget> = widget.clone();
+        Self::Render(widget.downgrade())
     }
 
     pub fn root<T: Compose>(view: T) -> (Self, NodeRef<T>) {
@@ -41,7 +43,11 @@ impl Node {
     pub fn render(&self, ctx: &mut Context) {
         match self {
             Self::Compose(node) => node.render(ctx),
-            Self::Render(node) => node.render(ctx),
+            Self::Render(node) => {
+                if let Some(node) = node.upgrade() {
+                    node.borrow().render(ctx)
+                }
+            }
         }
     }
 }

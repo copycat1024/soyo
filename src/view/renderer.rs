@@ -1,9 +1,8 @@
-use super::{Attribute, NodeRef};
+use super::{Attribute, NodeRef, Widget};
 use crate::{
     tui::{Context, Letter, Quad},
     util::SharedPtr,
 };
-use std::{marker::Unsize, ops::CoerceUnsized};
 
 pub trait Render: 'static {
     fn arrange(&self, attr: Attribute) -> Attribute {
@@ -12,9 +11,9 @@ pub trait Render: 'static {
     fn render(&self, quad: Quad, letter: &mut Letter);
 }
 
-pub struct Renderer<T = dyn Render>
+pub struct Renderer<T>
 where
-    T: Render + ?Sized,
+    T: Render,
 {
     widget: SharedPtr<T>,
     attr: SharedPtr<Attribute>,
@@ -33,21 +32,11 @@ impl<T: Render> Renderer<T> {
     }
 }
 
-impl<T> Renderer<T>
-where
-    T: Render + ?Sized,
-{
-    pub fn render(&self, ctx: &mut Context) {
+impl<T: Render> Widget for Renderer<T> {
+    fn render(&self, ctx: &mut Context) {
         let frame = self.attr.borrow().frame;
         ctx.render(frame.quad(), frame.z_value(), |q, l| {
             self.widget.borrow().render(q, l)
         });
     }
-}
-
-impl<T, U> CoerceUnsized<Renderer<U>> for Renderer<T>
-where
-    T: Render + Unsize<U> + ?Sized,
-    U: Render + ?Sized,
-{
 }
