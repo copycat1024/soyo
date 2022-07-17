@@ -1,24 +1,26 @@
 use super::{Attribute, NodeList, NodeRef};
-use crate::{tui::Context, util::SharedPtr};
-use std::{marker::Unsize, ops::CoerceUnsized};
+use crate::{
+    tui::Context,
+    util::{SharedPtr, WeakPtr},
+};
 
 pub trait Compose: 'static {
     fn register(&mut self, children: &mut NodeList);
     fn compose(&mut self, attr: &Attribute, children: &mut NodeList);
 }
 
-pub struct Composer<T = dyn Compose>
+pub struct Composer<T>
 where
-    T: Compose + ?Sized,
+    T: Compose,
 {
     widget: SharedPtr<T>,
     attr: SharedPtr<Attribute>,
-    children: NodeList,
+    children: SharedPtr<NodeList>,
 }
 
 impl<T> Composer<T>
 where
-    T: Compose,
+    T: Compose + 'static,
 {
     pub fn new(mut widget: T) -> Self {
         let mut children = NodeList::new();
@@ -27,46 +29,58 @@ where
         Self {
             widget: SharedPtr::new(widget),
             attr: SharedPtr::new(Attribute::default()),
-            children,
+            children: SharedPtr::new(children),
         }
     }
 
     pub fn get_ref(&self) -> NodeRef<T> {
         NodeRef::new(&self.widget, &self.attr)
     }
+
+    pub fn node(&self) -> ComposerNode {
+        let widget: SharedPtr<dyn Compose> = self.widget.clone();
+        ComposerNode {
+            widget: widget.downgrade(),
+            attr: self.attr.downgrade(),
+            children: self.children.downgrade(),
+        }
+    }
 }
 
-impl<T> Composer<T>
-where
-    T: Compose + ?Sized,
-{
+pub struct ComposerNode {
+    widget: WeakPtr<dyn Compose>,
+    attr: WeakPtr<Attribute>,
+    children: WeakPtr<NodeList>,
+}
+
+impl ComposerNode {
     pub fn resize(&mut self, w: i32, h: i32) {
-        self.attr.borrow_mut().resize(w, h);
+        if let Some(mut attr) = self.attr.upgrade() {
+            attr.borrow_mut().resize(w, h);
+        }
     }
 
     pub fn compose(&mut self) {
-        let Self {
-            widget,
-            attr,
-            children,
-        } = self;
+        let mut widget_ptr = match self.widget.upgrade() {
+            Some(ptr) => ptr,
+            None => return,
+        };
+        let mut widget = widget_ptr.borrow_mut();
 
-        widget.borrow_mut().compose(&attr.borrow(), children);
-        for node in children.list.iter_mut() {
-            node.compose();
+        if let Some(attr) = self.attr.upgrade()
+        && let Some(mut children) = self.children.upgrade() {
+            widget.compose(&attr.borrow(), &mut children.borrow_mut());
+            for node in children.borrow_mut().list.iter_mut() {
+                node.compose();
+            }
         }
     }
 
     pub fn render(&self, ctx: &mut Context) {
-        for node in self.children.list.iter() {
-            node.render(ctx);
+        if let Some(mut children) = self.children.upgrade() {
+            for node in children.borrow_mut().list.iter() {
+                node.render(ctx);
+            }
         }
     }
-}
-
-impl<T, U> CoerceUnsized<Composer<U>> for Composer<T>
-where
-    T: Compose + Unsize<U> + ?Sized,
-    U: Compose + ?Sized,
-{
 }
