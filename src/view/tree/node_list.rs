@@ -1,7 +1,7 @@
 use super::{Node, NodeRef};
 use crate::{
     util::SharedPtr,
-    view::{Compose, ComposerHost, Render, Renderer},
+    view::{Compose, Composer, Render, Renderer},
 };
 
 pub struct NodeList {
@@ -13,9 +13,9 @@ impl NodeList {
         Self { list: Vec::new() }
     }
 
-    pub fn register_composer<T: Compose>(&mut self, widget: T) -> ComposerHost<T> {
-        let composer = ComposerHost::new(widget);
-        self.list.push(Node::from_composer(composer.widget.clone()));
+    pub fn register_composer<T: Compose>(&mut self, widget: T) -> Composer<T> {
+        let composer = Composer::new(widget);
+        self.list.push(Node::from_composer(&composer));
         composer
     }
 

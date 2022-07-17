@@ -1,7 +1,7 @@
 use super::{Dispatch, Model};
 use crate::{
     tui::Event,
-    view::{Compose, NodeRef},
+    view::{Compose, Composer},
 };
 
 pub struct Control<M, C>
@@ -10,8 +10,8 @@ where
     C: Compose,
 {
     init: fn() -> (M, C),
-    dispatch: fn(Event, &NodeRef<C>, &mut Dispatch<M::Event>),
-    update: fn(&M, &mut NodeRef<C>),
+    dispatch: fn(Event, &Composer<C>, &mut Dispatch<M::Event>),
+    update: fn(&M, &mut Composer<C>),
 }
 
 impl<M, C> Control<M, C>
@@ -21,8 +21,8 @@ where
 {
     pub const fn new(
         init: fn() -> (M, C),
-        dispatch: fn(Event, &NodeRef<C>, &mut Dispatch<M::Event>),
-        update: fn(&M, &mut NodeRef<C>),
+        dispatch: fn(Event, &Composer<C>, &mut Dispatch<M::Event>),
+        update: fn(&M, &mut Composer<C>),
     ) -> Self {
         Self {
             init,
@@ -35,11 +35,11 @@ where
         (self.init)()
     }
 
-    pub fn dispatch(&self, event: Event, view: &NodeRef<C>, dispatch: &mut Dispatch<M::Event>) {
+    pub fn dispatch(&self, event: Event, view: &Composer<C>, dispatch: &mut Dispatch<M::Event>) {
         (self.dispatch)(event, view, dispatch);
     }
 
-    pub fn update(&self, model: &M, view: &mut NodeRef<C>) {
+    pub fn update(&self, model: &M, view: &mut Composer<C>) {
         (self.update)(model, view);
     }
 }

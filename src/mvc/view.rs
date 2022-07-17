@@ -2,12 +2,12 @@ use super::Flow;
 use crate::{
     tui::Context,
     util::Result,
-    view::{Compose, Node, NodeRef},
+    view::{Compose, Composer, Node},
 };
 
-pub struct View<T: 'static> {
+pub struct View<T: Compose> {
     root: Node,
-    root_ref: NodeRef<T>,
+    root_ref: Composer<T>,
 }
 
 impl<T: 'static + Compose> View<T> {
@@ -36,11 +36,11 @@ impl<T: 'static + Compose> View<T> {
         Ok(())
     }
 
-    pub fn node(&self) -> &NodeRef<T> {
+    pub fn node(&self) -> &Composer<T> {
         &self.root_ref
     }
 
-    pub fn node_mut(&mut self) -> &mut NodeRef<T> {
+    pub fn node_mut(&mut self) -> &mut Composer<T> {
         &mut self.root_ref
     }
 }

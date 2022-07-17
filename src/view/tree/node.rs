@@ -1,4 +1,4 @@
-use super::{NodeRef, Widget};
+use super::Widget;
 use crate::{
     tui::Context,
     util::{SharedPtr, WeakPtr},
@@ -10,8 +10,8 @@ pub struct Node {
 }
 
 impl Node {
-    pub(super) fn from_composer<T: Compose>(widget: SharedPtr<Composer<T>>) -> Node {
-        let widget: SharedPtr<dyn Widget> = widget.clone();
+    pub(super) fn from_composer<T: Compose>(widget: &Composer<T>) -> Node {
+        let widget: SharedPtr<dyn Widget> = widget.ptr.clone();
         Self {
             widget: widget.downgrade(),
         }
@@ -24,12 +24,11 @@ impl Node {
         }
     }
 
-    pub fn root<T: Compose>(view: T) -> (Self, NodeRef<T>) {
-        let composer = Composer::new(view);
-        let node_ref = composer.get_ref();
-        let node = Node::from_composer(SharedPtr::new(composer));
+    pub fn root<T: Compose>(widget: T) -> (Self, Composer<T>) {
+        let composer = Composer::new(widget);
+        let node = Node::from_composer(&composer);
 
-        (node, node_ref)
+        (node, composer)
     }
 
     pub fn resize(&mut self, w: i32, h: i32) {

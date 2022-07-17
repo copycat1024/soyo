@@ -1,4 +1,4 @@
-use super::{Attribute, NodeList, NodeRef, Widget};
+use super::{Attribute, NodeList, Widget};
 use crate::{tui::Context, util::SharedPtr};
 
 pub trait Compose: 'static {
@@ -6,59 +6,60 @@ pub trait Compose: 'static {
     fn compose(&mut self, attr: &Attribute, children: &mut NodeList);
 }
 
-pub struct Composer<T: Compose> {
-    widget: SharedPtr<T>,
-    attr: SharedPtr<Attribute>,
-    children: SharedPtr<NodeList>,
+pub struct ComposerHost<T: Compose> {
+    widget: T,
+    attr: Attribute,
+    children: NodeList,
 }
 
-impl<T: Compose> Composer<T> {
+impl<T: Compose> ComposerHost<T> {
     pub fn new(mut widget: T) -> Self {
         let mut children = NodeList::new();
         widget.register(&mut children);
 
         Self {
-            widget: SharedPtr::new(widget),
-            attr: SharedPtr::new(Attribute::default()),
-            children: SharedPtr::new(children),
+            widget: widget,
+            attr: Attribute::default(),
+            children: children,
         }
-    }
-
-    pub fn get_ref(&self) -> NodeRef<T> {
-        NodeRef::new(&self.widget, &self.attr)
     }
 }
 
-impl<T: Compose> Widget for Composer<T> {
+impl<T: Compose> Widget for ComposerHost<T> {
     fn render(&self, ctx: &mut Context) {
-        for node in self.children.borrow().list.iter() {
+        for node in self.children.list.iter() {
             node.render(ctx);
         }
     }
 
     fn resize(&mut self, w: i32, h: i32) {
-        self.attr.borrow_mut().resize(w, h);
+        self.attr.resize(w, h);
     }
 
     fn compose(&mut self) {
-        self.widget
-            .borrow_mut()
-            .compose(&self.attr.borrow(), &mut self.children.borrow_mut());
+        self.widget.compose(&self.attr, &mut self.children);
 
-        for node in self.children.borrow_mut().list.iter_mut() {
+        for node in self.children.list.iter_mut() {
             node.compose();
         }
     }
 }
 
-pub struct ComposerHost<T: Compose> {
-    pub widget: SharedPtr<Composer<T>>,
+pub struct Composer<T: Compose> {
+    pub ptr: SharedPtr<ComposerHost<T>>,
 }
 
-impl<T: Compose> ComposerHost<T> {
-    pub fn new(widget: T) -> Self {
+impl<T: Compose> Composer<T> {
+    pub fn new(composer: T) -> Self {
         Self {
-            widget: SharedPtr::new(Composer::new(widget)),
+            ptr: SharedPtr::new(ComposerHost::new(composer)),
         }
+    }
+
+    pub fn call_mut<F>(&mut self, f: F)
+    where
+        F: Fn(&mut T),
+    {
+        f(&mut self.ptr.borrow_mut().widget)
     }
 }
