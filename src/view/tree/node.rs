@@ -17,8 +17,8 @@ impl Node {
         }
     }
 
-    pub(super) fn from_renderer<T: Render>(widget: SharedPtr<Renderer<T>>) -> Node {
-        let widget: SharedPtr<dyn Widget> = widget.clone();
+    pub(super) fn from_renderer<T: Render>(widget: &Renderer<T>) -> Node {
+        let widget: SharedPtr<dyn Widget> = widget.ptr.clone();
         Self {
             widget: widget.downgrade(),
         }

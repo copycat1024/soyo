@@ -1,8 +1,5 @@
-use super::{Node, NodeRef};
-use crate::{
-    util::SharedPtr,
-    view::{Compose, Composer, Render, Renderer},
-};
+use super::Node;
+use crate::view::{Compose, Composer, Render, Renderer};
 
 pub struct NodeList {
     pub list: Vec<Node>,
@@ -19,15 +16,7 @@ impl NodeList {
         composer
     }
 
-    pub fn register_renderer<T>(&mut self, widget: T) -> NodeRef<T>
-    where
-        T: Render,
-    {
-        let renderer = Renderer::new(widget);
-        let ptr = renderer.get_ref();
-
-        let renderer = SharedPtr::new(renderer);
-        self.list.push(Node::from_renderer(renderer));
-        ptr
+    pub fn register_renderer<T: Render>(&mut self, widget: &Renderer<T>) {
+        self.list.push(Node::from_renderer(&widget));
     }
 }

@@ -6,8 +6,8 @@ mod renderer;
 mod tree;
 
 pub use attribute::Attribute;
-pub use composer::{Compose, ComposerHost, Composer};
+pub use composer::{Compose, ComposeHost, Composer};
 pub use frame::Frame;
 pub use label::Label;
-pub use renderer::{Render, Renderer};
+pub use renderer::{Render, RenderHost, Renderer};
 pub use tree::{Node, NodeList, NodeRef, Widget};

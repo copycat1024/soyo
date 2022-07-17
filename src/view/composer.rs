@@ -6,13 +6,13 @@ pub trait Compose: 'static {
     fn compose(&mut self, attr: &Attribute, children: &mut NodeList);
 }
 
-pub struct ComposerHost<T: Compose> {
+pub struct ComposeHost<T: Compose> {
     widget: T,
     attr: Attribute,
     children: NodeList,
 }
 
-impl<T: Compose> ComposerHost<T> {
+impl<T: Compose> ComposeHost<T> {
     pub fn new(mut widget: T) -> Self {
         let mut children = NodeList::new();
         widget.register(&mut children);
@@ -25,7 +25,7 @@ impl<T: Compose> ComposerHost<T> {
     }
 }
 
-impl<T: Compose> Widget for ComposerHost<T> {
+impl<T: Compose> Widget for ComposeHost<T> {
     fn render(&self, ctx: &mut Context) {
         for node in self.children.list.iter() {
             node.render(ctx);
@@ -46,13 +46,13 @@ impl<T: Compose> Widget for ComposerHost<T> {
 }
 
 pub struct Composer<T: Compose> {
-    pub ptr: SharedPtr<ComposerHost<T>>,
+    pub ptr: SharedPtr<ComposeHost<T>>,
 }
 
 impl<T: Compose> Composer<T> {
     pub fn new(composer: T) -> Self {
         Self {
-            ptr: SharedPtr::new(ComposerHost::new(composer)),
+            ptr: SharedPtr::new(ComposeHost::new(composer)),
         }
     }
 
