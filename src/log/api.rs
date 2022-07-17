@@ -26,6 +26,9 @@ pub fn enable_log<T: Into<u8>>(tag: T) {
 
 pub fn flush_log() {
     if let Ok(depot) = DEPOT.lock() {
+        println!("Printing log [len: {}]", depot.len());
         println!("{}", depot);
+    } else {
+        println!("Error locking log depot");
     }
 }

@@ -21,16 +21,18 @@ pub fn launch(tags: &[u8], app_list: &[AppItem]) -> Result {
         enable_log(*tag)
     }
 
-    // create context
-    let vt100 = Vt100::new(stdout());
-    let mut ctx = Context::new(vt100);
-    let mut code: usize = 0;
+    {
+        // create context
+        let vt100 = Vt100::new(stdout());
+        let mut ctx = Context::new(vt100);
+        let mut code: usize = 0;
 
-    loop {
-        code = if code < app_list.len() {
-            (app_list[code].runtime)(&mut ctx)?
-        } else {
-            break;
+        loop {
+            code = if code < app_list.len() {
+                (app_list[code].runtime)(&mut ctx)?
+            } else {
+                break;
+            }
         }
     }
 
