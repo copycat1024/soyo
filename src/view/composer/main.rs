@@ -19,3 +19,9 @@ impl<T: Compose> Composer<T> {
         f(&mut self.ptr.borrow_mut().widget)
     }
 }
+
+impl<T: Compose + Default> Default for Composer<T> {
+    fn default() -> Self {
+        Self::new(T::default())
+    }
+}
