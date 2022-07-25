@@ -1,7 +1,7 @@
 use super::Render;
 use crate::{
     tui::Context,
-    view::{Attribute, Widget},
+    view::{Attribute, Frame, Host},
 };
 
 pub struct RenderHost<T>
@@ -15,13 +15,13 @@ where
 impl<T: Render> RenderHost<T> {
     pub fn new(widget: T) -> Self {
         Self {
-            widget: widget,
+            widget,
             attr: Attribute::default(),
         }
     }
 }
 
-impl<T: Render> Widget for RenderHost<T> {
+impl<T: Render> Host for RenderHost<T> {
     fn render(&self, ctx: &mut Context) {
         let frame = self.attr.frame;
         ctx.render(frame.quad(), frame.z_value(), |q, l| {
@@ -29,7 +29,9 @@ impl<T: Render> Widget for RenderHost<T> {
         });
     }
 
-    fn resize(&mut self, _: i32, _: i32) {}
-
-    fn compose(&mut self) {}
+    fn layout(&mut self, frame: Frame) -> Frame {
+        let frame = self.widget.layout(frame);
+        self.attr.frame = frame;
+        frame
+    }
 }

@@ -1,24 +1,24 @@
-use super::Widget;
+use super::Host;
 use crate::{
     tui::Context,
     util::{SharedPtr, WeakPtr},
-    view::{Compose, Composer, Render, Renderer},
+    view::{Compose, Composer, Frame, Render, Renderer},
 };
 
 pub struct Node {
-    widget: WeakPtr<dyn Widget>,
+    widget: WeakPtr<dyn Host>,
 }
 
 impl Node {
     pub(super) fn from_composer<T: Compose>(widget: &Composer<T>) -> Node {
-        let widget: SharedPtr<dyn Widget> = widget.ptr.clone();
+        let widget: SharedPtr<dyn Host> = widget.ptr.clone();
         Self {
             widget: widget.downgrade(),
         }
     }
 
     pub(super) fn from_renderer<T: Render>(widget: &Renderer<T>) -> Node {
-        let widget: SharedPtr<dyn Widget> = widget.ptr.clone();
+        let widget: SharedPtr<dyn Host> = widget.ptr.clone();
         Self {
             widget: widget.downgrade(),
         }
@@ -31,15 +31,9 @@ impl Node {
         (node, composer)
     }
 
-    pub fn resize(&mut self, w: i32, h: i32) {
+    pub fn layout(&mut self, frame: Frame) {
         if let Some(mut node) = self.widget.upgrade() {
-            node.borrow_mut().resize(w, h);
-        }
-    }
-
-    pub fn compose(&mut self) {
-        if let Some(mut node) = self.widget.upgrade() {
-            node.borrow_mut().compose();
+            node.borrow_mut().layout(frame);
         }
     }
 

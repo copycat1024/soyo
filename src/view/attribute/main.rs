@@ -1,5 +1,6 @@
 use super::Frame;
 
+#[derive(Clone, Copy)]
 pub struct Attribute {
     pub frame: Frame,
 }
@@ -13,7 +14,9 @@ impl Default for Attribute {
 }
 
 impl Attribute {
-    pub fn resize(&mut self, w: i32, h: i32) {
-        self.frame = self.frame.set_w(w).set_h(h);
+    pub fn from_size(w: i32, h: i32) -> Self {
+        Self {
+            frame: Frame::screen(w, h),
+        }
     }
 }

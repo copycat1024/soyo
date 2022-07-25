@@ -61,6 +61,9 @@ where
             // update view
             app.update();
 
+            // compose view
+            app.view.compose();
+
             // draw
             app.view.draw(ctx, &mut app.flow)?;
         }

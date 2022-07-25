@@ -1,11 +1,11 @@
 use crate::{
     tui::{Letter, Quad},
-    view::Attribute,
+    view::Frame,
 };
 
 pub trait Render: 'static {
-    fn arrange(&self, attr: Attribute) -> Attribute {
-        attr
+    fn layout(&mut self, me: Frame) -> Frame {
+        me
     }
     fn render(&self, quad: Quad, letter: &mut Letter);
 }

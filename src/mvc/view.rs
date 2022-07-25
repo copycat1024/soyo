@@ -2,26 +2,34 @@ use super::Flow;
 use crate::{
     tui::Context,
     util::Result,
-    view::{Compose, Composer, Node},
+    view::{Compose, Composer, Frame, Node},
 };
 
 pub struct View<T: Compose> {
     root: Node,
     root_ref: Composer<T>,
+    screen: Frame,
 }
 
 impl<T: 'static + Compose> View<T> {
     pub fn new(node: T) -> Self {
         let (root, root_ref) = Node::root(node);
-        Self { root, root_ref }
+        Self {
+            root,
+            root_ref,
+            screen: Frame::screen(0, 0),
+        }
     }
 
     pub fn resize(&mut self, w: i32, h: i32) {
-        self.root.resize(w, h);
-        self.root.compose();
+        self.screen = Frame::screen(w, h);
     }
 
-    pub fn draw(&self, ctx: &mut Context, flow: &mut Flow) -> Result {
+    pub fn compose(&mut self) {
+        self.root.layout(self.screen);
+    }
+
+    pub fn draw(&mut self, ctx: &mut Context, flow: &mut Flow) -> Result {
         if flow.clear {
             flow.clear = false;
             ctx.clear()?;

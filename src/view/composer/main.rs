@@ -1,5 +1,8 @@
 use super::{Compose, ComposeHost};
-use crate::util::SharedPtr;
+use crate::{
+    util::SharedPtr,
+    view::{Frame, Host},
+};
 
 pub struct Composer<T: Compose> {
     pub ptr: SharedPtr<ComposeHost<T>>,
@@ -12,7 +15,18 @@ impl<T: Compose> Composer<T> {
         }
     }
 
-    pub fn call_mut<F>(&mut self, f: F)
+    pub fn layout(&mut self, attr: Frame) -> Frame {
+        self.ptr.borrow_mut().layout(attr)
+    }
+
+    pub fn get<F, R>(&self, callback: F) -> R
+    where
+        F: FnOnce(&T) -> R,
+    {
+        callback(&self.ptr.borrow().widget)
+    }
+
+    pub fn set<F>(&mut self, f: F)
     where
         F: Fn(&mut T),
     {

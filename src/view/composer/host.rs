@@ -1,7 +1,7 @@
 use super::Compose;
 use crate::{
     tui::Context,
-    view::{Attribute, NodeList, Widget},
+    view::{Attribute, Frame, Host, NodeList},
 };
 
 pub struct ComposeHost<T: Compose> {
@@ -12,33 +12,27 @@ pub struct ComposeHost<T: Compose> {
 
 impl<T: Compose> ComposeHost<T> {
     pub fn new(mut widget: T) -> Self {
-        let mut children = NodeList::new();
+        let mut children = NodeList::default();
         widget.register(&mut children);
 
         Self {
-            widget: widget,
+            widget,
             attr: Attribute::default(),
-            children: children,
+            children,
         }
     }
 }
 
-impl<T: Compose> Widget for ComposeHost<T> {
+impl<T: Compose> Host for ComposeHost<T> {
     fn render(&self, ctx: &mut Context) {
         for node in self.children.list.iter() {
             node.render(ctx);
         }
     }
 
-    fn resize(&mut self, w: i32, h: i32) {
-        self.attr.resize(w, h);
-    }
-
-    fn compose(&mut self) {
-        self.widget.compose(&self.attr, &mut self.children);
-
-        for node in self.children.list.iter_mut() {
-            node.compose();
-        }
+    fn layout(&mut self, frame: Frame) -> Frame {
+        let frame = self.widget.layout(frame);
+        self.attr.frame = frame;
+        frame
     }
 }

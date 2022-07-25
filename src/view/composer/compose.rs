@@ -1,6 +1,6 @@
-use crate::view::{Attribute, NodeList};
+use crate::view::{Frame, NodeList};
 
 pub trait Compose: 'static {
     fn register(&mut self, children: &mut NodeList);
-    fn compose(&mut self, attr: &Attribute, children: &mut NodeList);
+    fn layout(&mut self, me: Frame) -> Frame;
 }

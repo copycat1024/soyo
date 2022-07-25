@@ -1,7 +1,7 @@
+mod host;
 mod node;
 mod node_list;
-mod widget;
 
+pub use host::Host;
 pub use node::Node;
 pub use node_list::NodeList;
-pub use widget::Widget;
