@@ -35,16 +35,23 @@ where
 
     pub fn run(control: Control<M, C>, ctx: &mut Context) -> Result<usize> {
         let mut app = Self::new(control);
-        let (w, h) = ctx.size();
 
-        app.resize(ctx, w, h)?;
+        // resize on init
+        let (w, h) = ctx.size();
+        app.view.resize(w, h, ctx, &mut app.flow)?;
 
         // main loop
         'main: loop {
             // handle native events
             while let Some(event) = ctx.event()? {
-                if let Event::Resize { w, h } = event {
-                    app.resize(ctx, w, h)?;
+                match event {
+                    Event::Resize { w, h } => {
+                        app.view.resize(w, h, ctx, &mut app.flow)?;
+                    }
+                    Event::Update { delta } => {
+                        app.view.tick(delta, &mut app.flow);
+                    }
+                    _ => {}
                 }
 
                 app.dispatch(event);
@@ -62,7 +69,7 @@ where
             app.update();
 
             // compose view
-            app.view.compose();
+            app.view.compose(&app.flow);
 
             // draw
             app.view.draw(ctx, &mut app.flow)?;
@@ -94,11 +101,5 @@ where
         } = self;
 
         control.update(model, view.node_mut());
-    }
-
-    fn resize(&mut self, ctx: &mut Context, w: i32, h: i32) -> Result {
-        self.flow.draw = true;
-        self.view.resize(w, h);
-        ctx.clear()
     }
 }

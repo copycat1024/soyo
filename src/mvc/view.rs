@@ -4,6 +4,7 @@ use crate::{
     util::Result,
     view::{Compose, Composer, Frame, Node},
 };
+use std::time::Duration;
 
 pub struct View<T: Compose> {
     root: Node,
@@ -21,12 +22,22 @@ impl<T: 'static + Compose> View<T> {
         }
     }
 
-    pub fn resize(&mut self, w: i32, h: i32) {
+    pub fn resize(&mut self, w: i32, h: i32, ctx: &mut Context, flow: &mut Flow) -> Result {
+        flow.draw = true;
         self.screen = Frame::screen(w, h);
+        ctx.clear()
     }
 
-    pub fn compose(&mut self) {
-        self.root.layout(self.screen);
+    pub fn tick(&mut self, delta: Duration, flow: &mut Flow) {
+        if self.root.tick(delta) {
+            flow.draw = true;
+        }
+    }
+
+    pub fn compose(&mut self, flow: &Flow) {
+        if flow.draw {
+            self.root.layout(self.screen);
+        }
     }
 
     pub fn draw(&mut self, ctx: &mut Context, flow: &mut Flow) -> Result {

@@ -86,6 +86,16 @@ impl Frame {
         }
     }
 
+    pub fn offset(self, dx: i32, dy: i32, dw: i32, dh: i32, dz: i32) -> Self {
+        Self {
+            x: self.x + dx,
+            y: self.y + dy,
+            w: self.w + dw,
+            h: self.h + dh,
+            z: self.z + dz,
+        }
+    }
+
     pub fn quad(&self) -> Quad {
         Quad {
             x: self.x,

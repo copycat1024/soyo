@@ -19,11 +19,18 @@ impl<T: Render> Renderer<T> {
         self.ptr.borrow_mut().layout(frame)
     }
 
-    pub fn view<F, R>(&mut self, callback: F) -> R
+    pub fn get<F, R>(&self, f: F) -> R
     where
-        F: FnOnce(&mut T) -> R,
+        F: FnOnce(&T) -> R,
     {
-        callback(&mut self.ptr.borrow_mut().widget)
+        f(&self.ptr.borrow().widget)
+    }
+
+    pub fn set<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut T),
+    {
+        f(&mut self.ptr.borrow_mut().widget)
     }
 }
 

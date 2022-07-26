@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use super::Host;
 use crate::{
     tui::Context,
@@ -40,6 +42,14 @@ impl Node {
     pub fn render(&self, ctx: &mut Context) {
         if let Some(node) = self.widget.upgrade() {
             node.borrow().render(ctx)
+        }
+    }
+
+    pub fn tick(&mut self, delta: Duration) -> bool {
+        if let Some(mut node) = self.widget.upgrade() {
+            node.borrow_mut().tick(delta)
+        } else {
+            false
         }
     }
 }
