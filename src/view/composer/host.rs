@@ -3,7 +3,6 @@ use crate::{
     tui::Context,
     view::{Attribute, Frame, Host, NodeList},
 };
-use std::time::Duration;
 
 pub struct ComposeHost<T: Compose> {
     pub widget: T,
@@ -37,7 +36,7 @@ impl<T: Compose> Host for ComposeHost<T> {
         frame
     }
 
-    fn tick(&mut self, delta: Duration) -> bool {
+    fn tick(&mut self, delta: u64) -> bool {
         let mut draw = self.widget.tick(delta);
         for node in self.children.list.iter_mut() {
             draw |= node.tick(delta);

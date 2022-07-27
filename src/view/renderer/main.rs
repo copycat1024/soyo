@@ -1,7 +1,7 @@
 use super::{Render, RenderHost};
 use crate::{
     util::SharedPtr,
-    view::{Frame, Host},
+    view::{Attribute, Frame, Host},
 };
 
 pub struct Renderer<T: Render> {
@@ -19,6 +19,13 @@ impl<T: Render> Renderer<T> {
         self.ptr.borrow_mut().layout(frame)
     }
 
+    pub fn attr<F>(&mut self, f: F)
+    where
+        F: FnOnce(&mut Attribute),
+    {
+        f(&mut self.ptr.borrow_mut().attr)
+    }
+
     pub fn get<F, R>(&self, f: F) -> R
     where
         F: FnOnce(&T) -> R,
@@ -26,9 +33,9 @@ impl<T: Render> Renderer<T> {
         f(&self.ptr.borrow().widget)
     }
 
-    pub fn set<F>(&mut self, f: F)
+    pub fn set<F, R>(&mut self, f: F) -> R
     where
-        F: FnOnce(&mut T),
+        F: FnOnce(&mut T) -> R,
     {
         f(&mut self.ptr.borrow_mut().widget)
     }

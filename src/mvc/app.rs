@@ -49,6 +49,7 @@ where
                         app.view.resize(w, h, ctx, &mut app.flow)?;
                     }
                     Event::Update { delta } => {
+                        let delta = delta.as_millis() as u64;
                         app.view.tick(delta, &mut app.flow);
                     }
                     _ => {}

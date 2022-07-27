@@ -4,7 +4,6 @@ use crate::{
     util::Result,
     view::{Compose, Composer, Frame, Node},
 };
-use std::time::Duration;
 
 pub struct View<T: Compose> {
     root: Node,
@@ -28,7 +27,7 @@ impl<T: 'static + Compose> View<T> {
         ctx.clear()
     }
 
-    pub fn tick(&mut self, delta: Duration, flow: &mut Flow) {
+    pub fn tick(&mut self, delta: u64, flow: &mut Flow) {
         if self.root.tick(delta) {
             flow.draw = true;
         }

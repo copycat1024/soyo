@@ -1,6 +1,6 @@
 use crate::tui::Quad;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct Frame {
     pub x: i32,
     pub y: i32,
@@ -86,13 +86,13 @@ impl Frame {
         }
     }
 
-    pub fn offset(self, dx: i32, dy: i32, dw: i32, dh: i32, dz: i32) -> Self {
+    pub fn margin(self, top: i32, bot: i32, left: i32, right: i32) -> Self {
         Self {
-            x: self.x + dx,
-            y: self.y + dy,
-            w: self.w + dw,
-            h: self.h + dh,
-            z: self.z + dz,
+            x: self.x + left,
+            y: self.y + top,
+            w: self.w - left - right,
+            h: self.h - top - bot,
+            z: self.z,
         }
     }
 

@@ -26,9 +26,9 @@ impl<T: Compose> Composer<T> {
         callback(&self.ptr.borrow().widget)
     }
 
-    pub fn set<F>(&mut self, f: F)
+    pub fn set<F, R>(&mut self, f: F) -> R
     where
-        F: FnOnce(&mut T),
+        F: FnOnce(&mut T) -> R,
     {
         f(&mut self.ptr.borrow_mut().widget)
     }

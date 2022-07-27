@@ -10,3 +10,4 @@ pub mod mvc;
 pub mod tui;
 pub mod util;
 pub mod view;
+pub mod widget;

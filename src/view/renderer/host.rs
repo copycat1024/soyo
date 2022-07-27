@@ -3,7 +3,6 @@ use crate::{
     tui::Context,
     view::{Attribute, Frame, Host},
 };
-use std::time::Duration;
 
 pub struct RenderHost<T>
 where
@@ -26,6 +25,8 @@ impl<T: Render> Host for RenderHost<T> {
     fn render(&self, ctx: &mut Context) {
         let frame = self.attr.frame;
         ctx.render(frame.quad(), frame.z_value(), |q, l| {
+            *l.fg = self.attr.fg;
+            *l.bg = self.attr.bg;
             self.widget.render(q, l)
         });
     }
@@ -36,7 +37,7 @@ impl<T: Render> Host for RenderHost<T> {
         frame
     }
 
-    fn tick(&mut self, delta: Duration) -> bool {
+    fn tick(&mut self, delta: u64) -> bool {
         self.widget.tick(delta)
     }
 }

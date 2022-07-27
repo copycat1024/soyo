@@ -1,11 +1,12 @@
-use super::Render;
 use crate::{
-    tui::{Color, Letter, Quad},
+    tui::{Letter, Quad},
     util::FlexVec,
+    view::Render,
 };
+use std::fmt::Arguments;
 
 pub struct Label {
-    pub text: FlexVec<char>,
+    text: FlexVec<char>,
 }
 
 impl Label {
@@ -14,12 +15,15 @@ impl Label {
         let w2 = pos.w;
         (w2 - w1) / 2
     }
+
+    pub fn write_fmt(&mut self, fmt: Arguments<'_>) {
+        write!(self.text, "{}", fmt);
+    }
 }
 
 impl Render for Label {
     fn render(&self, quad: Quad, letter: &mut Letter) {
         *letter.c = self.text[quad.x - self.align(quad)];
-        *letter.bg = Color::RED;
     }
 }
 
