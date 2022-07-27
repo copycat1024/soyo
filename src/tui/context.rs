@@ -15,7 +15,7 @@ struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            event_period: Duration::from_millis(10),
+            event_period: Duration::from_millis(5),
             update_period: Duration::from_millis(50),
             clear_bg: Color::BLACK,
         }
