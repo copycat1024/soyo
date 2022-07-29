@@ -1,40 +1,29 @@
-use super::{Control, Dispatch, Flow, Model, View};
+use super::{Dispatch, Flow, Model, View};
 use crate::{
     tui::{Context, Event},
     util::Result,
-    view::Compose,
 };
 
-pub struct App<M, C>
-where
-    M: Model,
-    C: Compose,
-{
+pub struct App<M: Model> {
     flow: Flow,
     dispatch: Dispatch<M::Event>,
     model: M,
-    view: View<C>,
-    control: Control<M, C>,
+    view: View<M::View>,
 }
 
-impl<M, C> App<M, C>
-where
-    M: Model,
-    C: Compose,
-{
-    pub fn new(control: Control<M, C>) -> Self {
-        let (model, composer) = control.init();
+impl<M: Model> App<M> {
+    pub fn new() -> Self {
+        let (model, composer) = M::new();
         Self {
             dispatch: Dispatch::default(),
             model,
             view: View::new(composer),
-            control,
             flow: Flow::default(),
         }
     }
 
-    pub fn run(control: Control<M, C>, ctx: &mut Context) -> Result<usize> {
-        let mut app = Self::new(control);
+    pub fn run(ctx: &mut Context) -> Result<usize> {
+        let mut app = Self::new();
 
         // resize on init
         let (w, h) = ctx.size();
@@ -84,23 +73,19 @@ where
 
     fn dispatch(&mut self, event: Event) {
         let Self {
-            control,
             view,
             dispatch,
+            model,
             ..
         } = self;
 
-        control.dispatch(event, view.node(), dispatch)
+        if let Some(event) = view.node().get(|view| model.dispatch(event, view)) {
+            dispatch.dispatch(event);
+        }
     }
 
     fn update(&mut self) {
-        let Self {
-            control,
-            model,
-            view,
-            ..
-        } = self;
-
-        control.update(model, view.node_mut());
+        let Self { model, view, .. } = self;
+        view.node_mut().set(|view| model.update(view));
     }
 }
