@@ -5,38 +5,60 @@ use crate::{
 };
 use std::io::stdout;
 
-pub struct AppItem {
-    pub name: &'static str,
-    pub runtime: fn(ctx: &mut Context) -> Result<usize>,
+pub type Instance<Args = ()> = fn(args: &mut Args, ctx: &mut Context) -> Result<usize>;
+
+pub struct Launcher<Args: 'static> {
+    ctx: Context,
+    code: usize,
+    args: Args,
 }
 
-impl AppItem {
-    pub const fn new(name: &'static str, runtime: fn(ctx: &mut Context) -> Result<usize>) -> Self {
-        Self { name, runtime }
-    }
-}
-
-pub fn launch(tags: &[u8], app_list: &[AppItem]) -> Result {
-    for tag in tags {
-        enable_log(*tag)
-    }
-
-    {
-        // create context
+impl<Args: 'static> Launcher<Args> {
+    pub fn new(args: Args) -> Self {
         let vt100 = Vt100::new(stdout());
-        let mut ctx = Context::new(vt100);
-        let mut code: usize = 0;
+        Self {
+            ctx: Context::new(vt100),
+            code: 0,
+            args,
+        }
+    }
+
+    pub fn launch(self, tags: &[u8], app_list: &[Instance<Args>]) -> Result {
+        for tag in tags {
+            enable_log(*tag)
+        }
+
+        let r = self.run(app_list);
+
+        flush_log();
+
+        r
+    }
+
+    fn run(self, app_list: &[Instance<Args>]) -> Result {
+        let Self {
+            mut code,
+            mut ctx,
+            mut args,
+        } = self;
 
         loop {
             code = if code < app_list.len() {
-                (app_list[code].runtime)(&mut ctx)?
+                (app_list[code])(&mut args, &mut ctx)?
             } else {
                 break;
             }
         }
+
+        Ok(())
     }
+}
 
-    flush_log();
-
-    Ok(())
+impl<Args> Default for Launcher<Args>
+where
+    Args: 'static + Default,
+{
+    fn default() -> Self {
+        Self::new(Args::default())
+    }
 }

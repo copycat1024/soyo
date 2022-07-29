@@ -4,16 +4,24 @@ use crate::{
     util::Result,
 };
 
-pub struct App<M: Model> {
+pub struct App<A, M>
+where
+    A: 'static,
+    M: Model<A>,
+{
     flow: Flow,
     dispatch: Dispatch<M::Event>,
     model: M,
     view: View<M::View>,
 }
 
-impl<M: Model> App<M> {
-    pub fn new() -> Self {
-        let (model, composer) = M::new();
+impl<A, M> App<A, M>
+where
+    A: 'static,
+    M: Model<A>,
+{
+    pub fn new(args: &mut A) -> Self {
+        let (model, composer) = M::new(args);
         Self {
             dispatch: Dispatch::default(),
             model,
@@ -22,8 +30,8 @@ impl<M: Model> App<M> {
         }
     }
 
-    pub fn run(ctx: &mut Context) -> Result<usize> {
-        let mut app = Self::new();
+    pub fn run(args: &mut A, ctx: &mut Context) -> Result<usize> {
+        let mut app = Self::new(args);
 
         // resize on init
         let (w, h) = ctx.size();
