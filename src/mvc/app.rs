@@ -63,14 +63,16 @@ where
                 }
             }
 
-            // update view
-            app.update();
+            if app.flow.draw {
+                // update view
+                app.update();
 
-            // compose view
-            app.view.compose(&app.flow);
+                // compose view
+                app.view.compose();
 
-            // draw
-            app.view.draw(ctx, &mut app.flow)?;
+                // draw
+                app.view.draw(ctx, &mut app.flow)?;
+            }
         }
 
         // clean up app

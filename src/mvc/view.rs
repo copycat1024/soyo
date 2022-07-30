@@ -33,10 +33,8 @@ impl<T: 'static + Compose> View<T> {
         }
     }
 
-    pub fn compose(&mut self, flow: &Flow) {
-        if flow.draw {
-            self.root.layout(self.screen);
-        }
+    pub fn compose(&mut self) {
+        self.root.layout(self.screen);
     }
 
     pub fn draw(&mut self, ctx: &mut Context, flow: &mut Flow) -> Result {
@@ -45,11 +43,9 @@ impl<T: 'static + Compose> View<T> {
             ctx.clear()?;
         }
 
-        if flow.draw {
-            flow.draw = false;
-            self.root.render(ctx);
-            ctx.draw()?;
-        }
+        flow.draw = false;
+        self.root.render(ctx);
+        ctx.draw()?;
 
         Ok(())
     }

@@ -45,6 +45,8 @@ impl FrameBuffer {
         let mut seq = Sequencer::new(backend);
         let x0 = self.buffer.rect().x;
 
+        seq.backend.bg(seq.bg)?;
+        seq.backend.fg(seq.fg)?;
         for (c, x, y) in self.buffer.iter(true) {
             if x == x0 {
                 seq.flush()?;
