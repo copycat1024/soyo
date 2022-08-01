@@ -31,9 +31,9 @@ impl<T: Compose> Host for ComposeHost<T> {
     }
 
     fn layout(&mut self, frame: Frame) -> Frame {
-        let frame = self.widget.layout(frame);
         self.attr.frame = frame;
-        frame
+        self.widget.layout(&mut self.attr.frame);
+        self.attr.frame
     }
 
     fn tick(&mut self, delta: u64) -> bool {
