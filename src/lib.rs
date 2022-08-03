@@ -11,3 +11,5 @@ pub mod tui;
 pub mod util;
 pub mod view;
 pub mod widget;
+
+pub use log::debug;
