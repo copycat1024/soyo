@@ -11,6 +11,7 @@ where
 {
     flow: Flow,
     dispatch: Dispatch<M::Event>,
+    trigger: Dispatch<M::Trigger>,
     model: M,
     view: View<M::View>,
 }
@@ -24,6 +25,7 @@ where
         let (model, composer) = M::new(args);
         Self {
             dispatch: Dispatch::default(),
+            trigger: Dispatch::default(),
             model,
             view: View::new(composer),
             flow: Flow::default(),
@@ -57,10 +59,17 @@ where
 
             // handle domain event
             while let Some(event) = app.dispatch.event() {
-                app.model.reduce(event, &mut app.flow);
+                let trigger = app.model.reduce(event, &mut app.flow);
                 if app.flow.stop {
                     break 'main;
                 }
+                for t in trigger {
+                    app.trigger.dispatch(t);
+                }
+            }
+
+            while let Some(trigger) = app.trigger.event() {
+                app.trigger(trigger);
             }
 
             if app.flow.draw {
@@ -97,5 +106,10 @@ where
     fn update(&mut self) {
         let Self { model, view, .. } = self;
         view.node_mut().set(|view| model.update(view));
+    }
+
+    fn trigger(&mut self, trigger: M::Trigger) {
+        let Self { model, view, .. } = self;
+        view.node_mut().set(|view| model.trigger(view, trigger));
     }
 }
