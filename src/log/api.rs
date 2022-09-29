@@ -1,8 +1,8 @@
 use super::{tag, Logger};
-use std::{lazy::SyncLazy, sync::Mutex};
+use std::{sync::LazyLock, sync::Mutex};
 
-pub static DEPOT: SyncLazy<Mutex<String>> = SyncLazy::new(|| Mutex::new(String::new()));
-pub static TAG: SyncLazy<Mutex<Vec<bool>>> = SyncLazy::new(|| Mutex::new(Vec::new()));
+pub static DEPOT: LazyLock<Mutex<String>> = LazyLock::new(|| Mutex::new(String::new()));
+pub static TAG: LazyLock<Mutex<Vec<bool>>> = LazyLock::new(|| Mutex::new(Vec::new()));
 
 pub fn log<T: Into<u8>>(tag: T) -> Logger {
     Logger {
