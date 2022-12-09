@@ -1,12 +1,12 @@
 use soyo::{
-    log::{enable_log, flush_log, Tag},
+    log::{enable_log, flush_log, tag},
     tui::{backend::Vt100, Color, Context, Event, Quad},
     util::Result,
 };
 use std::io::stdout;
 
 fn main() -> Result {
-    enable_log(Tag::Event);
+    enable_log(tag::EVENT);
 
     {
         let backend = Vt100::new(stdout());

@@ -1,6 +1,6 @@
 use crate::{
-    log::{log, Tag},
-    tui::{backend::Backend, Color, Event, Frame, Letter, Quad},
+    log::{log, tag},
+    tui::{backend::Backend, Color, Event, FrameBuffer, Letter, Quad},
     util::Result,
 };
 use std::time::Duration;
@@ -15,8 +15,8 @@ struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            event_period: Duration::from_millis(10),
-            update_period: Duration::from_millis(100),
+            event_period: Duration::from_millis(5),
+            update_period: Duration::from_millis(50),
             clear_bg: Color::BLACK,
         }
     }
@@ -27,7 +27,7 @@ pub struct Context {
     backend: Box<dyn Backend>,
 
     // internal components
-    frame: Frame,
+    frame: FrameBuffer,
     config: Config,
     w: i32,
     h: i32,
@@ -37,7 +37,7 @@ impl Context {
     pub fn new<B: Backend>(backend: B) -> Self {
         Self {
             backend: Box::new(backend),
-            frame: Frame::default(),
+            frame: FrameBuffer::default(),
             config: Config::default(),
             w: 0,
             h: 0,
@@ -49,7 +49,7 @@ impl Context {
             .event(self.config.event_period, self.config.update_period)
             .map(|event| {
                 if let Some(event) = event {
-                    writeln!(log(Tag::Event), "{event:?}");
+                    writeln!(log(tag::EVENT), "{event:?}");
                     if let Event::Resize { w, h } = event {
                         self.w = w;
                         self.h = h;

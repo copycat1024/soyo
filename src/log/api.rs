@@ -1,8 +1,8 @@
-use super::{Logger, Tag};
-use std::{lazy::SyncLazy, sync::Mutex};
+use super::{tag, Logger};
+use std::{sync::LazyLock, sync::Mutex};
 
-pub static DEPOT: SyncLazy<Mutex<String>> = SyncLazy::new(|| Mutex::new(String::new()));
-pub static TAG: SyncLazy<Mutex<Vec<bool>>> = SyncLazy::new(|| Mutex::new(Vec::new()));
+pub static DEPOT: LazyLock<Mutex<String>> = LazyLock::new(|| Mutex::new(String::new()));
+pub static TAG: LazyLock<Mutex<Vec<bool>>> = LazyLock::new(|| Mutex::new(Vec::new()));
 
 pub fn log<T: Into<u8>>(tag: T) -> Logger {
     Logger {
@@ -11,7 +11,7 @@ pub fn log<T: Into<u8>>(tag: T) -> Logger {
 }
 
 pub fn debug() -> Logger {
-    log(Tag::Debug)
+    log(tag::DEBUG)
 }
 
 pub fn enable_log<T: Into<u8>>(tag: T) {
@@ -26,6 +26,9 @@ pub fn enable_log<T: Into<u8>>(tag: T) {
 
 pub fn flush_log() {
     if let Ok(depot) = DEPOT.lock() {
+        println!("Printing log [len: {}]", depot.len());
         println!("{}", depot);
+    } else {
+        println!("Error locking log depot");
     }
 }

@@ -1,10 +1,10 @@
 use std::collections::VecDeque;
 
-pub struct Dispatch<T: Copy> {
+pub struct Dispatch<T> {
     queue: VecDeque<T>,
 }
 
-impl<T: Copy> Dispatch<T> {
+impl<T> Dispatch<T> {
     pub fn event(&mut self) -> Option<T> {
         self.queue.pop_front()
     }
@@ -14,7 +14,7 @@ impl<T: Copy> Dispatch<T> {
     }
 }
 
-impl<T: Copy> Default for Dispatch<T> {
+impl<T> Default for Dispatch<T> {
     fn default() -> Self {
         Self {
             queue: VecDeque::new(),

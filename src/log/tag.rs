@@ -1,14 +1,5 @@
-#[derive(Clone, Copy)]
-pub enum Tag {
-    Debug,
-    Event,
-    Frame,
-    Backend,
-    Custom,
-}
-
-impl From<Tag> for u8 {
-    fn from(tag: Tag) -> Self {
-        tag as u8
-    }
-}
+pub const DEBUG: u8 = 0;
+pub const EVENT: u8 = 1;
+pub const FRAME_BUFFER: u8 = 2;
+pub const BACKEND: u8 = 3;
+pub const CUSOTM: u8 = 4;

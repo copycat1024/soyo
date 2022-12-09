@@ -4,11 +4,11 @@ use crate::{
 };
 
 #[derive(Default)]
-pub struct Frame {
+pub struct FrameBuffer {
     buffer: Buffer<Slot>,
 }
 
-impl Frame {
+impl FrameBuffer {
     pub fn map_event(&mut self, event: Option<Event>) -> Option<Event> {
         if let Some(event) = event {
             match event {
@@ -45,6 +45,8 @@ impl Frame {
         let mut seq = Sequencer::new(backend);
         let x0 = self.buffer.rect().x;
 
+        seq.backend.bg(seq.bg)?;
+        seq.backend.fg(seq.fg)?;
         for (c, x, y) in self.buffer.iter(true) {
             if x == x0 {
                 seq.flush()?;

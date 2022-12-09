@@ -1,7 +1,7 @@
 use crate::tui::Quad;
 
-#[derive(Clone, Copy)]
-pub struct Layer {
+#[derive(Clone, Copy, Default)]
+pub struct Frame {
     pub x: i32,
     pub y: i32,
     pub w: i32,
@@ -9,7 +9,7 @@ pub struct Layer {
     pub z: i32,
 }
 
-impl Layer {
+impl Frame {
     pub fn screen(w: i32, h: i32) -> Self {
         Self {
             x: 0,
@@ -23,9 +23,19 @@ impl Layer {
     pub fn rise_z(self) -> Self {
         self.set_z(self.z + 1)
     }
+
+    pub fn center(self, w: i32, h: i32) -> Self {
+        Self {
+            x: self.x + (self.w - w) / 2,
+            y: self.y + (self.h - h) / 2,
+            w,
+            h,
+            z: self.z,
+        }
+    }
 }
 
-impl Layer {
+impl Frame {
     pub fn set_x(self, x: i32) -> Self {
         Self {
             x,
@@ -73,6 +83,16 @@ impl Layer {
             w: self.w,
             h: self.h,
             z,
+        }
+    }
+
+    pub fn margin(self, top: i32, bot: i32, left: i32, right: i32) -> Self {
+        Self {
+            x: self.x + left,
+            y: self.y + top,
+            w: self.w - left - right,
+            h: self.h - top - bot,
+            z: self.z,
         }
     }
 
